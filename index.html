@@ -1256,6 +1256,12 @@
             });
             
             loadData();
+            
+            // 🔄 ตั้งเวลารีเฟรชข้อมูลอัตโนมัติทุก 5 นาที (อัปเดตข้อมูลสดเมื่อเปิดจอทิ้งไว้)
+            setInterval(() => {
+                console.log("🔄 Auto-refreshing live dashboard data from Google Sheet...");
+                loadData();
+            }, 5 * 60 * 1000);
         });
         function loadData() {
             // ⚡ 1. ถ้ามีข้อมูลฝังมาจาก Server (Apps Script) ให้แสดงผลทันทีภายใน 0.01 วินาที!
