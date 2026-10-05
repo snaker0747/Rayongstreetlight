@@ -1258,11 +1258,11 @@
             
             loadData();
             
-            // 🔄 ตั้งเวลารีเฟรชข้อมูลอัตโนมัติทุก 5 นาทีในพื้นหลัง (เงียบ ไม่บล็อกหน้าจอ)
+            // 🔄 ตั้งเวลารีเฟรชข้อมูลอัตโนมัติทุก 1 นาทีในพื้นหลัง (เงียบ นุ่มนวล ไม่บล็อกหน้าจอ)
             setInterval(() => {
-                console.log("🔄 Auto-refreshing live dashboard data from Google Sheet in background...");
+                console.log("🔄 Auto-refreshing live dashboard data from Google Sheet (every 1 min)...");
                 fetchLiveGoogleSheetGViz(true);
-            }, 5 * 60 * 1000);
+            }, 1 * 60 * 1000);
         });
 
         function loadData(forceRefresh = false) {
@@ -1368,9 +1368,21 @@
                         console.warn("Failed to save localStorage cache:", e);
                     }
 
-                    renderDashboard(processed.dashboardData);
+                    // หากผู้ใช้กำลังค้นหาหรือเลือกตัวกรองค้างอยู่ ให้ประมวลผลต่อตามเงื่อนไขเดิมอย่างนุ่มนวล
+                    const keyword = document.getElementById('advSearchInput') ? document.getElementById('advSearchInput').value.trim() : '';
+                    const comm = document.getElementById('advCommunitySelect') ? document.getElementById('advCommunitySelect').value : 'all';
+                    const lamp = document.getElementById('advLampTypeSelect') ? document.getElementById('advLampTypeSelect').value : 'all';
+                    const surv = document.getElementById('advSurveyorSelect') ? document.getElementById('advSurveyorSelect').value : 'all';
+                    const soi = document.getElementById('advSoiSelect') ? document.getElementById('advSoiSelect').value : 'all';
+                    const isFiltering = keyword !== '' || comm !== 'all' || lamp !== 'all' || surv !== 'all' || soi !== 'all';
+
                     populateSoiOptions(processed.allRecords);
-                    updateFilterStatsBadge(processed.allRecords.length, processed.allRecords.length);
+                    if (isFiltering) {
+                        applyAdvancedFilters();
+                    } else {
+                        renderDashboard(processed.dashboardData);
+                        updateFilterStatsBadge(processed.allRecords.length, processed.allRecords.length);
+                    }
 
                     if (loader) loader.style.display = 'none';
                     if (syncBadge) {
