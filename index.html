@@ -979,10 +979,11 @@
             </div>
         </div>
         <div class="header-actions">
-            <div style="margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: flex-end; gap: 0.5rem;">
+            <div style="margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: flex-end; gap: 0.5rem; flex-wrap: wrap;">
+                <span id="syncStatusBadge" style="display: none; font-size: 0.78rem; font-weight: 500; padding: 0.25rem 0.6rem; border-radius: 6px; background: rgba(255,255,255,0.06); border: 1px solid var(--card-border); transition: all 0.3s ease;"></span>
                 <button id="themeToggle" class="btn-refresh" title="เปลี่ยนธีม" style="font-size: 1.2rem; padding: 0.2rem 0.6rem;">☀️</button>
                 <a href="https://mapdata-lighting.netlify.app/" target="_blank" class="btn-refresh" style="text-decoration: none; font-size: 0.9rem; background-color: #2563eb; color: white; border-color: #2563eb; font-weight: bold;">📍 ข้อมูลแผนที่</a>
-                <button class="btn-refresh" onclick="loadData()">↻ รีเฟรช</button>
+                <button class="btn-refresh" onclick="loadData(true)">↻ รีเฟรช</button>
             </div>
             <div class="text-muted" id="lastUpdateText">ข้อมูล ณ: กำลังโหลด...</div>
         </div>
@@ -1257,13 +1258,14 @@
             
             loadData();
             
-            // 🔄 ตั้งเวลารีเฟรชข้อมูลอัตโนมัติทุก 5 นาที (อัปเดตข้อมูลสดเมื่อเปิดจอทิ้งไว้)
+            // 🔄 ตั้งเวลารีเฟรชข้อมูลอัตโนมัติทุก 5 นาทีในพื้นหลัง (เงียบ ไม่บล็อกหน้าจอ)
             setInterval(() => {
-                console.log("🔄 Auto-refreshing live dashboard data from Google Sheet...");
-                loadData();
+                console.log("🔄 Auto-refreshing live dashboard data from Google Sheet in background...");
+                fetchLiveGoogleSheetGViz(true);
             }, 5 * 60 * 1000);
         });
-        function loadData() {
+
+        function loadData(forceRefresh = false) {
             // ⚡ 1. ถ้ามีข้อมูลฝังมาจาก Server (Apps Script) ให้แสดงผลทันทีภายใน 0.01 วินาที!
             if (window.INITIAL_DATA && window.INITIAL_DATA.status === 'success') {
                 console.log("⚡ [Layer 1] Loaded immediately from Server-Injected Data!");
@@ -1272,48 +1274,72 @@
             }
 
             const loader = document.getElementById('loader');
-            if (loader) loader.style.display = 'flex';
+            const syncBadge = document.getElementById('syncStatusBadge');
 
-            // ⚡ 2. พยายามดึงผ่าน Web App API ก่อน ถ้าโฮสต์อยู่บนเว็บ (เช่น Netlify หรือเซิร์ฟเวอร์ภายนอก)
-            if (window.location.protocol.startsWith('http') && window.WEB_APP_API) {
-                console.log("⚡ [Layer 2] Trying Apps Script Web App API...");
-                const apiUrl = window.WEB_APP_API;
-                fetch(apiUrl)
-                    .then(res => res.json())
-                    .then(res => {
-                        if (res && res.status === 'success') {
-                            console.log("⚡ [Layer 2] Apps Script Fetch Success!");
-                            renderDashboard(res);
-                        } else {
-                            console.warn("Apps Script API returned non-success response (e.g. online test mode):", res);
-                            fetchLiveGoogleSheetGViz();
+            // ⚡ 2. ระบบแคชอัจฉริยะ SWR (Stale-While-Revalidate):
+            // เปิดเว็บปุ๊บ แสดงผลทันทีใน 0.005 วินาทีจากแคชในเครื่อง ไม่ต้องรอวงล้อหมุน!
+            let hasLoadedFromCache = false;
+            if (!forceRefresh) {
+                try {
+                    const cachedStr = localStorage.getItem('rayong_dashboard_cache_v1');
+                    if (cachedStr) {
+                        const cached = JSON.parse(cachedStr);
+                        if (cached && cached.dashboardData && cached.dashboardData.status === 'success') {
+                            console.log("⚡ [SWR Cache] Instant render from local cache (< 0.01s)!");
+                            globalAllRecords = cached.allRecords || [];
+                            currentFilteredRecords = globalAllRecords;
+                            renderDashboard(cached.dashboardData);
+                            populateSoiOptions(globalAllRecords);
+                            updateFilterStatsBadge(globalAllRecords.length, globalAllRecords.length);
+                            if (loader) loader.style.display = 'none';
+                            hasLoadedFromCache = true;
+                            if (syncBadge) {
+                                syncBadge.style.display = 'inline-block';
+                                syncBadge.innerText = '⚡ ซิงค์ข้อมูลล่าสุด...';
+                                syncBadge.style.color = 'var(--text-muted)';
+                            }
                         }
-                    })
-                    .catch(err => {
-                        console.warn("Apps Script Fetch failed (CORS/Permissions/Down):", err);
-                        fetchLiveGoogleSheetGViz();
-                    });
-                return;
+                    }
+                } catch(e) {
+                    console.warn("Local cache read error:", e);
+                }
             }
 
-            // ⚡ 3. หากไม่ได้โฮสต์หรือไม่มี Web App ให้ดึงสดจาก Google Sheet ตรงๆ ทันที
-            fetchLiveGoogleSheetGViz();
+            // ถ้าไม่มีแคช (เปิดครั้งแรกในเครื่องนี้) หรือผู้ใช้กดปุ่มรีเฟรช ให้แสดงตัวโหลด
+            if (!hasLoadedFromCache) {
+                if (loader) loader.style.display = 'flex';
+                if (syncBadge) {
+                    syncBadge.style.display = 'inline-block';
+                    syncBadge.innerText = '🔄 กำลังดึงข้อมูลสด...';
+                    syncBadge.style.color = 'var(--primary)';
+                }
+            }
+
+            // ⚡ 3. พุ่งตรงไปดึงข้อมูลสดจาก Google Sheet ทันที (ไม่รอ Apps Script ที่ตายแล้ว)
+            fetchLiveGoogleSheetGViz(hasLoadedFromCache);
         }
 
-        // ⚡ [Layer 3] ดึงข้อมูลสดจาก Google Sheet ตรงๆ ผ่าน GViz JSONP (ไม่ติด CORS, รองรับ Netlify 100%)
-        function fetchLiveGoogleSheetGViz() {
-            console.log("⚡ [Layer 3] Connecting directly to Google Sheet via GViz JSONP...");
+        // ⚡ ดึงข้อมูลสดจาก Google Sheet ตรงๆ ผ่าน GViz JSONP (ความเร็วสูง คัดกรองเฉพาะคอลัมน์ A-I)
+        function fetchLiveGoogleSheetGViz(isSilent = false) {
+            console.log("⚡ [Live Sync] Connecting directly to Google Sheet via GViz JSONP...");
             const sheetId = '1ItTEV7wSB5M-99TUgYzl8v2YL0NZoZXYREzwE-a9u40';
-            const callbackName = 'gvizCallback_' + Math.floor(Math.random() * 1000000);
+            const callbackName = 'gvizCallback_' + Math.floor(Math.random() * 10000000);
+            const syncBadge = document.getElementById('syncStatusBadge');
+            const loader = document.getElementById('loader');
             
             let isHandled = false;
             const timeoutTimer = setTimeout(() => {
                 if (!isHandled) {
                     isHandled = true;
-                    console.warn("GViz timeout, falling back to offline data...");
-                    loadOfflineFallback();
+                    console.warn("GViz timeout, falling back...");
+                    if (!isSilent) loadOfflineFallback();
+                    if (syncBadge) {
+                        syncBadge.style.display = 'inline-block';
+                        syncBadge.innerText = '⚠️ ใช้ข้อมูลแคชล่าสุด';
+                        syncBadge.style.color = 'var(--warning)';
+                    }
                 }
-            }, 10000);
+            }, 8000);
 
             window[callbackName] = function(json) {
                 if (isHandled) return;
@@ -1326,28 +1352,54 @@
                 if (scriptEl && scriptEl.parentNode) scriptEl.parentNode.removeChild(scriptEl);
 
                 if (json && json.table && json.table.rows && json.table.rows.length > 0) {
-                    console.log("⚡ [Layer 3] Live Google Sheet data loaded successfully! Rows:", json.table.rows.length);
+                    console.log("⚡ [Live Sync] Live Google Sheet data received! Total rows:", json.table.rows.length);
                     const processed = processGvizTable(json.table);
                     globalAllRecords = processed.allRecords;
                     currentFilteredRecords = processed.allRecords;
+
+                    // บันทึกแคชเวอร์ชันล่าสุดลง localStorage เพื่อให้ครั้งต่อไปเปิดได้ทันทีใน 0.01 วินาที
+                    try {
+                        localStorage.setItem('rayong_dashboard_cache_v1', JSON.stringify({
+                            dashboardData: processed.dashboardData,
+                            allRecords: processed.allRecords,
+                            savedAt: Date.now()
+                        }));
+                    } catch(e) {
+                        console.warn("Failed to save localStorage cache:", e);
+                    }
+
                     renderDashboard(processed.dashboardData);
                     populateSoiOptions(processed.allRecords);
                     updateFilterStatsBadge(processed.allRecords.length, processed.allRecords.length);
+
+                    if (loader) loader.style.display = 'none';
+                    if (syncBadge) {
+                        syncBadge.style.display = 'inline-block';
+                        syncBadge.innerText = '🟢 ข้อมูลสดล่าสุด';
+                        syncBadge.style.color = 'var(--success)';
+                        setTimeout(() => {
+                            if (syncBadge && syncBadge.innerText === '🟢 ข้อมูลสดล่าสุด') {
+                                syncBadge.style.display = 'none';
+                            }
+                        }, 4000);
+                    }
                 } else {
                     console.warn("Invalid GViz data format, using offline fallback...");
-                    loadOfflineFallback();
+                    if (!isSilent) loadOfflineFallback();
                 }
             };
 
             const script = document.createElement('script');
             script.id = 'gvizScriptTag';
-            script.src = 'https:' + String.fromCharCode(47, 47) + 'docs.google.com/spreadsheets/d/' + sheetId + '/gviz/tq?tqx=responseHandler:' + callbackName;
+            // คัดกรองเฉพาะคอลัมน์ A ถึง I เพื่อให้ส่งข้อมูลรวดเร็วที่สุด
+            const query = encodeURIComponent('select A, B, C, D, E, F, G, H, I');
+            script.src = 'https:' + String.fromCharCode(47, 47) + 'docs.google.com/spreadsheets/d/' + sheetId + '/gviz/tq?tq=' + query + '&tqx=responseHandler:' + callbackName;
             script.onerror = function(err) {
                 if (isHandled) return;
                 isHandled = true;
                 clearTimeout(timeoutTimer);
                 console.warn("GViz script load error:", err);
-                loadOfflineFallback();
+                if (!isSilent) loadOfflineFallback();
             };
             document.head.appendChild(script);
         }
@@ -2112,24 +2164,11 @@
                 }
             }
 
-            // 1. ลองดึงผ่าน Direct Web API ก่อน
-            if (window.location.protocol.startsWith('http') && window.WEB_APP_API) {
-                const recUrl = window.WEB_APP_API.replace('api=data', 'api=records');
-                fetch(recUrl)
-                    .then(r => r.json())
-                    .then(processRecords)
-                    .catch(e => {
-                        console.warn("Fetch records fallback error:", e);
-                        fetchLiveGoogleSheetGViz();
-                    });
-                return;
-            }
-
-            // 2. ถ้าเปิดใน Apps Script แบบไม่มี Web API
+            // ถ้าเปิดใน Apps Script แบบมี google.script.run
             if (typeof google !== 'undefined' && google.script && google.script.run) {
                 google.script.run.withSuccessHandler(processRecords).getAllRecordsCompact();
             } else {
-                fetchLiveGoogleSheetGViz();
+                fetchLiveGoogleSheetGViz(true);
             }
         }
 
