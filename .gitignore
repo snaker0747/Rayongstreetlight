@@ -1,0 +1,24 @@
+# Temporary & scratch files
+*.log
+*.tmp
+temp_check.js
+live_dump.txt
+live_unpacked.html
+live_script.js
+apps_script_response.html
+netlify_index.html
+test_sheet.csv
+gviz_test.txt
+unpack_live.js
+download_img.ps1
+
+# Large local backup data
+*.csv
+img_b64.txt
+
+# OS & Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.vercel

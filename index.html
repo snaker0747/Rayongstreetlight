@@ -1,0 +1,2845 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>แดชบอร์ดสำรวจโคมไฟถนน</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <style>
+        :root {
+            --bg-color: #0b1320;
+            --card-bg: #1e293b;
+            --card-border: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary: #38bdf8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --accent: #8b5cf6;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Prompt', sans-serif;
+        }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            padding: 1.5rem;
+            min-height: 100vh;
+            font-size: 1.05rem; /* ทำให้ตัวอักษรใหญ่ขึ้น */
+            transition: background-color 0.3s, color 0.3s;
+        }
+        /* Light Theme CSS */
+        [data-theme="light"] {
+            --bg-color: #f1f5f9;
+            --card-bg: #ffffff;
+            --card-border: #cbd5e1;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+        }
+        [data-theme="light"] .step-box { background: #f8fafc; }
+        [data-theme="light"] .activity-card { background: #f8fafc; border-color: #e2e8f0; }
+        [data-theme="light"] .density-bar-container { background: #e2e8f0; }
+        /* Utility */
+        .glass {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            padding: 1.25rem;
+        }
+        .flex-between {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .text-green { color: var(--success); }
+        .text-red { color: var(--danger); }
+        .text-muted { color: var(--text-muted); font-size: 0.85rem; }
+        /* Header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+        }
+        
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .header-title .icon-box {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--warning);
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+        .header-title h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+        .header-title p {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+        .header-actions {
+            text-align: right;
+            font-size: 0.85rem;
+        }
+        .btn-refresh {
+            background: transparent;
+            border: 1px solid var(--card-border);
+            color: var(--text-main);
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: 0.2s;
+        }
+        .btn-refresh:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        /* Grid Layouts */
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr; /* แบ่งครึ่งหน้าจอ 50:50 ไปเลย เพื่อให้กราฟโดนัทมีพื้นที่กว้างที่สุด */
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        /* Custom Legend สำหรับกราฟโดนัท */
+        .custom-legend-item {
+            display: flex;
+            align-items: center;
+            font-size: 1rem;
+        }
+        .custom-legend-color {
+            width: 14px;
+            height: 14px;
+            border-radius: 4px;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+        .custom-legend-label {
+            flex: 1;
+            color: var(--text-main);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .custom-legend-value {
+            font-weight: 600;
+            color: var(--text-main);
+            margin-right: 8px;
+        }
+        .custom-legend-percent {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+        /* Stat Cards */
+        .stat-card {
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card h3 {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .stat-value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin: 0.5rem 0;
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+        }
+        .stat-unit {
+            font-size: 1rem;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+        .stat-badge {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+            font-size: 1rem; /* ปรับให้ใหญ่ขึ้นจาก 0.75rem */
+            font-weight: 600;
+        }
+        
+        /* Specific Card Accents */
+        .stat-card:nth-child(1)::before { content: ''; position: absolute; top: -20px; right: -20px; width: 100px; height: 100px; background: rgba(245, 158, 11, 0.1); border-radius: 50%; filter: blur(20px); }
+        .stat-card:nth-child(2)::before { content: ''; position: absolute; top: -20px; right: -20px; width: 100px; height: 100px; background: rgba(16, 185, 129, 0.1); border-radius: 50%; filter: blur(20px); }
+        .stat-card:nth-child(3)::before { content: ''; position: absolute; top: -20px; right: -20px; width: 100px; height: 100px; background: rgba(239, 68, 68, 0.1); border-radius: 50%; filter: blur(20px); }
+        .stat-card:nth-child(4)::before { content: ''; position: absolute; top: -20px; right: -20px; width: 100px; height: 100px; background: rgba(139, 92, 246, 0.1); border-radius: 50%; filter: blur(20px); }
+        /* Progress Stepper */
+        .stepper-container {
+            margin-bottom: 1rem;
+        }
+        .stepper-header {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .steps-wrapper {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+        }
+        .steps-wrapper::before {
+            content: '';
+            position: absolute;
+            top: 15px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--card-border);
+            z-index: 1;
+        }
+        .step-item {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 16%;
+            text-align: center;
+            gap: 0.5rem;
+        }
+        .step-box {
+            width: 100%;
+            background: #0f172a;
+            border: 1px solid var(--card-border);
+            color: var(--text-muted);
+            padding: 0.4rem 0;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        .step-item.active .step-box {
+            background: rgba(245, 158, 11, 0.15);
+            border-color: var(--warning);
+            color: var(--warning);
+        }
+        /* Charts Section */
+        .chart-box {
+            position: relative;
+            height: 320px; /* ทำให้กราฟใหญ่ขึ้น */
+            width: 100%;
+        }
+        /* Density Lists */
+        .density-list {
+            list-style: none;
+            margin-top: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            max-height: 350px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+        .density-list::-webkit-scrollbar { width: 6px; }
+        .density-list::-webkit-scrollbar-thumb { background: var(--card-border); border-radius: 3px; }
+        .density-item {
+            display: flex;
+            align-items: center;
+            font-size: 0.85rem;
+        }
+        .density-label {
+            flex: 0 0 120px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .density-bar-container {
+            flex: 1;
+            margin: 0 1rem;
+            background: rgba(255,255,255,0.05);
+            height: 6px;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .density-bar {
+            height: 100%;
+            border-radius: 3px;
+        }
+        .density-count {
+            flex: 0 0 30px;
+            text-align: right;
+            font-weight: 600;
+        }
+        /* Activity List */
+        .activity-list {
+            margin-top: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            max-height: 420px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+        .activity-list::-webkit-scrollbar { width: 6px; }
+        .activity-list::-webkit-scrollbar-thumb { background: var(--card-border); border-radius: 3px; }
+        .activity-card {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--card-border);
+            padding: 0.8rem;
+            border-radius: 8px;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        .activity-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+        .activity-content {
+            flex: 1;
+        }
+        .activity-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 0.2rem;
+            display: flex;
+            justify-content: space-between;
+        }
+        .activity-desc {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        .activity-badge {
+            display: inline-block;
+            padding: 0.1rem 0.4rem;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            font-size: 0.7rem;
+            margin-top: 0.3rem;
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        /* Loader */
+        #loader {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(5px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .spinner {
+            width: 50px; height: 50px;
+            border: 4px solid var(--card-border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        @media (max-width: 1024px) {
+            .grid-2 { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 768px) {
+            body {
+                padding: 0.8rem;
+                font-size: 0.95rem;
+            }
+            .grid-4, .grid-3, .grid-2 {
+                grid-template-columns: 1fr !important;
+            }
+            .steps-wrapper {
+                overflow-x: auto;
+                white-space: nowrap;
+                justify-content: flex-start;
+                gap: 1.5rem;
+                padding-bottom: 0.5rem;
+            }
+            .steps-wrapper::-webkit-scrollbar {
+                height: 4px;
+            }
+            .steps-wrapper::-webkit-scrollbar-thumb {
+                background-color: var(--card-border);
+                border-radius: 4px;
+            }
+            .step-item {
+                width: auto;
+                min-width: 80px;
+            }
+            header {
+                flex-direction: column;
+                text-align: center;
+                gap: 1rem;
+            }
+            .header-title {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            .header-actions {
+                text-align: center;
+                width: 100%;
+            }
+            .header-actions > div {
+                justify-content: center !important;
+            }
+            .pie-chart-container {
+                flex-direction: column !important;
+                height: auto !important;
+                gap: 2rem !important;
+            }
+            .pie-chart-container .chart-box {
+                width: 100%;
+                height: 250px !important;
+            }
+            #customLegend {
+                width: 100%;
+                max-height: none !important;
+            }
+        }
+
+        /* ==========================================================================
+           ADVANCED FILTER & SEARCH STYLES
+           ========================================================================== */
+        .adv-filter-card {
+            margin-bottom: 1.25rem;
+            position: relative;
+            z-index: 20;
+        }
+        .adv-filter-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--card-border);
+        }
+        .adv-filter-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .adv-filter-icon {
+            font-size: 1.4rem;
+            background: rgba(56, 189, 248, 0.15);
+            color: var(--primary);
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .adv-filter-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .filter-count-badge {
+            background: rgba(56, 189, 248, 0.15);
+            color: var(--primary);
+            padding: 0.35rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+        .btn-filter-action {
+            padding: 0.45rem 0.9rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid transparent;
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: all 0.2s ease;
+        }
+        .btn-filter-action.primary {
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+            color: white;
+            box-shadow: 0 2px 8px rgba(2, 132, 199, 0.3);
+        }
+        .btn-filter-action.primary:hover {
+            filter: brightness(1.1);
+            transform: translateY(-1px);
+        }
+        .btn-filter-action.secondary {
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--text-main);
+            border-color: var(--card-border);
+        }
+        .btn-filter-action.secondary:hover {
+            background: rgba(255, 255, 255, 0.12);
+        }
+        .adv-filter-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr 1.2fr;
+            gap: 0.75rem;
+            align-items: flex-end;
+        }
+        .adv-filter-field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+        .adv-filter-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+        .search-input-wrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .adv-input, .adv-select {
+            width: 100%;
+            padding: 0.55rem 0.85rem;
+            border-radius: 8px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--card-border);
+            color: var(--text-main);
+            font-family: inherit;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        [data-theme="light"] .adv-input, [data-theme="light"] .adv-select {
+            background: #ffffff;
+            border-color: #cbd5e1;
+        }
+        .adv-input:focus, .adv-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
+        }
+        .clear-search-btn {
+            position: absolute;
+            right: 10px;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.9rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        .clear-search-btn:hover {
+            color: var(--danger);
+            background: rgba(239, 68, 68, 0.15);
+        }
+        .adv-custom-date-row {
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px dashed var(--card-border);
+        }
+        .custom-date-inputs {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+        }
+        .custom-date-inputs .date-input {
+            width: auto;
+            min-width: 150px;
+        }
+        .btn-apply-date {
+            padding: 0.5rem 1rem;
+            background: var(--primary);
+            color: #0b1320;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.85rem;
+        }
+        .adv-active-tags-row {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .active-tags-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+        .active-tags-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+        }
+        .adv-tag-chip {
+            background: rgba(56, 189, 248, 0.12);
+            color: var(--primary);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            padding: 0.2rem 0.6rem;
+            border-radius: 14px;
+            font-size: 0.8rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+        .adv-tag-close {
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.85rem;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+        .adv-tag-close:hover {
+            opacity: 1;
+            color: var(--danger);
+        }
+
+        /* Modal Styles */
+        .adv-modal {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        .adv-modal-backdrop {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(11, 19, 32, 0.75);
+            backdrop-filter: blur(6px);
+        }
+        .adv-modal-content {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            max-width: 1200px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            padding: 1.25rem;
+            border-radius: 16px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+            animation: modalFadeIn 0.25s ease-out;
+        }
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(15px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .adv-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--card-border);
+            gap: 1rem;
+        }
+        .adv-modal-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .adv-modal-title h3 {
+            margin: 0;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        .modal-count-pill {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .adv-modal-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+        .btn-export-csv {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            color: var(--success);
+            padding: 0.4rem 0.8rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s ease;
+        }
+        .btn-export-csv:hover {
+            background: var(--success);
+            color: white;
+        }
+        .btn-modal-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--card-border);
+            color: var(--text-main);
+            font-size: 1.1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .btn-modal-close:hover {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+            border-color: var(--danger);
+        }
+        .adv-modal-body {
+            flex: 1;
+            overflow-y: auto;
+            margin: 1rem 0;
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.15);
+        }
+        .table-responsive-wrap {
+            overflow-x: auto;
+            width: 100%;
+        }
+        .adv-data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            white-space: nowrap;
+        }
+        .adv-data-table th {
+            position: sticky;
+            top: 0;
+            background: var(--card-bg);
+            padding: 0.75rem 0.85rem;
+            border-bottom: 1px solid var(--card-border);
+            color: var(--text-muted);
+            font-weight: 600;
+            text-align: left;
+            z-index: 10;
+        }
+        .adv-data-table td {
+            padding: 0.65rem 0.85rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            color: var(--text-main);
+        }
+        [data-theme="light"] .adv-data-table td {
+            border-bottom-color: #f1f5f9;
+        }
+        .adv-data-table tbody tr:hover {
+            background: rgba(56, 189, 248, 0.08);
+        }
+        .badge-lamp-type {
+            display: inline-block;
+            padding: 0.2rem 0.55rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .btn-table-gps {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.25rem 0.55rem;
+            background: rgba(56, 189, 248, 0.12);
+            color: var(--primary);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        .btn-table-gps:hover {
+            background: var(--primary);
+            color: #0b1320;
+        }
+        .btn-table-photo {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.25rem 0.55rem;
+            background: rgba(16, 185, 129, 0.12);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-family: inherit;
+        }
+        .btn-table-photo:hover {
+            background: var(--success);
+            color: white;
+        }
+        .adv-modal-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--card-border);
+            font-size: 0.85rem;
+        }
+        .pagination-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--text-muted);
+        }
+        .page-size-select {
+            padding: 0.3rem 0.5rem;
+            border-radius: 6px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            color: var(--text-main);
+            font-family: inherit;
+            font-size: 0.8rem;
+        }
+        .pagination-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn-page {
+            padding: 0.35rem 0.75rem;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--card-border);
+            color: var(--text-main);
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.8rem;
+        }
+        .btn-page:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .page-indicator {
+            font-weight: 600;
+            color: var(--text-main);
+            padding: 0 0.4rem;
+        }
+
+        /* Lightbox Image Preview Modal */
+        .image-lightbox-modal {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        .lightbox-content {
+            position: relative;
+            max-width: 90vw;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .lightbox-content img {
+            max-width: 100%;
+            max-height: 80vh;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            object-fit: contain;
+        }
+        .lightbox-close-btn {
+            position: absolute;
+            top: -40px;
+            right: 0;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .lightbox-caption {
+            margin-top: 0.75rem;
+            color: #e2e8f0;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        @media (max-width: 1024px) {
+            .adv-filter-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .adv-filter-field.full-width {
+                grid-column: span 2;
+            }
+        }
+        @media (max-width: 640px) {
+            .adv-filter-grid {
+                grid-template-columns: 1fr;
+            }
+            .adv-filter-field.full-width {
+                grid-column: span 1;
+            }
+            .adv-filter-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .adv-filter-header-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="loader">
+        <div class="spinner"></div>
+        <div style="margin-top: 1rem; color: var(--text-muted);">กำลังโหลดข้อมูล...</div>
+    </div>
+    <!-- Header -->
+    <header class="glass">
+        <div class="header-title">
+            <div class="logo-box">
+                <img src="https://lh3.googleusercontent.com/d/10sQCt0_O4dIjq_2sZvPEhPXwDGbv9idm" alt="โลโก้สำนักช่าง" style="width: 65px; height: 65px; border-radius: 50%; object-fit: cover; box-shadow: 0 4px 8px rgba(0,0,0,0.3); border: 2px solid white;">
+            </div>
+            <div>
+                <h1 style="font-size: 1.4rem;">สถานะงานสำรวจโคมไฟสาธารณะ</h1>
+                <p style="font-size: 1rem;">ฝ่ายสาธารณูปโภค ส่วนการโยธา สำนักช่าง เทศบาลนครระยอง</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <div style="margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: flex-end; gap: 0.5rem;">
+                <button id="themeToggle" class="btn-refresh" title="เปลี่ยนธีม" style="font-size: 1.2rem; padding: 0.2rem 0.6rem;">☀️</button>
+                <a href="https://mapdata-lighting.netlify.app/" target="_blank" class="btn-refresh" style="text-decoration: none; font-size: 0.9rem; background-color: #2563eb; color: white; border-color: #2563eb; font-weight: bold;">📍 ข้อมูลแผนที่</a>
+                <button class="btn-refresh" onclick="loadData()">↻ รีเฟรช</button>
+            </div>
+            <div class="text-muted" id="lastUpdateText">ข้อมูล ณ: กำลังโหลด...</div>
+        </div>
+    </header>
+
+    <!-- Advanced Search & Filter Center -->
+    <div class="glass adv-filter-card">
+        <div class="adv-filter-header">
+            <div class="adv-filter-title">
+                <span class="adv-filter-icon">🔍</span>
+                <div>
+                    <h3 style="font-size: 1.05rem; font-weight: 600; margin: 0;">ระบบค้นหาและตัวกรองข้อมูลขั้นสูง</h3>
+                    <p class="text-muted" style="font-size: 0.8rem; margin: 0;">ค้นหาละเอียดตามคำสำคัญ, ชุมชน, ซอย/ถนน, ชนิดโคมไฟ และผู้สำรวจ</p>
+                </div>
+            </div>
+            <div class="adv-filter-header-actions">
+                <span id="filterStatsBadge" class="filter-count-badge">⚡ ข้อมูลทั้งหมด</span>
+                <button type="button" id="btnOpenTableModal" onclick="openDetailedTableModal()" class="btn-filter-action primary" title="ดูรายการข้อมูลที่ตรงตามเงื่อนไขในรูปแบบตาราง">
+                    📋 ตารางผลการค้นหา
+                </button>
+                <button type="button" onclick="resetAdvancedFilters()" class="btn-filter-action secondary" title="ล้างค่าตัวกรองทั้งหมด">
+                    🔄 ล้างตัวกรอง
+                </button>
+            </div>
+        </div>
+
+        <!-- Filter Grid Inputs -->
+        <div class="adv-filter-grid">
+            <!-- 1. Text Search -->
+            <div class="adv-filter-field full-width">
+                <label class="adv-filter-label">🔎 ค้นหาด่วน (ชื่อซอย, ถนน, รหัสโคม, หรือหมายเหตุ)</label>
+                <div class="search-input-wrap">
+                    <input type="text" id="advSearchInput" class="adv-input" placeholder="พิมพ์ชื่อซอย, ถนน, รหัสโคมไฟ, หมายเหตุ..." oninput="debounceFilter()">
+                    <button type="button" id="advClearSearchBtn" class="clear-search-btn" onclick="clearSearchInput()" style="display:none;" title="ล้างคำค้น">✕</button>
+                </div>
+            </div>
+
+            <!-- 2. Community Select -->
+            <div class="adv-filter-field">
+                <label class="adv-filter-label">🏙️ ชุมชน (29 ชุมชน)</label>
+                <select id="advCommunitySelect" class="adv-select" onchange="handleCommunityChange()">
+                    <option value="all">ทุกชุมชน (ทั้งหมด)</option>
+                </select>
+            </div>
+
+            <!-- 3. Lamp Type Select -->
+            <div class="adv-filter-field">
+                <label class="adv-filter-label">💡 ชนิดโคมไฟ</label>
+                <select id="advLampTypeSelect" class="adv-select" onchange="applyAdvancedFilters()">
+                    <option value="all">ทุกชนิดโคมไฟ</option>
+                </select>
+            </div>
+
+            <!-- 4. Surveyor Select -->
+            <div class="adv-filter-field">
+                <label class="adv-filter-label">👷 ผู้สำรวจ</label>
+                <select id="advSurveyorSelect" class="adv-select" onchange="applyAdvancedFilters()">
+                    <option value="all">ผู้สำรวจทุกคน</option>
+                </select>
+            </div>
+
+            <!-- 5. Soi / Road Dropdown Select (สไตล์เหมือนกับ ผู้สำรวจ / ชุมชน) -->
+            <div class="adv-filter-field">
+                <label class="adv-filter-label">🛣️ ค้นหาซอย / ถนน</label>
+                <select id="advSoiSelect" class="adv-select" onchange="applyAdvancedFilters()">
+                    <option value="all">ทุกซอย / ถนน (ทั้งหมด)</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Active Filter Tags / Chips -->
+        <div id="advActiveTagsContainer" class="adv-active-tags-row" style="display: none;">
+            <span class="active-tags-label">เงื่อนไขที่เลือก:</span>
+            <div id="advActiveTagsList" class="active-tags-list"></div>
+        </div>
+    </div>
+
+    <!-- Top Stats -->
+    <div class="grid-4">
+        <div class="stat-card glass">
+            <h3>⚡ สำรวจแล้วทั้งหมด</h3>
+            <div class="stat-value">
+                <span id="valTotal">0</span> <span class="stat-unit">จุด</span>
+            </div>
+            <div class="flex-between text-muted">
+                <span>ครอบคลุม <span id="valTotalComm" style="color:var(--text-main)">0</span> ชุมชน จากทั้งหมด 29 ชุมชน</span>
+            </div>
+        </div>
+        
+        <div class="stat-card glass">
+            <h3>📅 สำรวจวันนี้</h3>
+            <div class="stat-value">
+                <span id="valToday">0</span> <span class="stat-unit">จุด</span>
+                <span class="stat-badge" id="valTodayBadge">+0 จากเมื่อวาน</span>
+            </div>
+            <div class="flex-between text-muted">
+                <span>เมื่อวาน</span>
+                <span id="valYesterday" style="color:var(--text-main)">0 จุด</span>
+            </div>
+        </div>
+        <div class="stat-card glass">
+            <h3>👥 ผู้สำรวจทั้งหมด</h3>
+            <div class="stat-value">
+                <span id="valSurveyors">0</span> <span class="stat-unit">คน</span>
+            </div>
+            <div class="flex-between text-muted">
+                <span>จากอีเมลที่บันทึกไว้</span>
+            </div>
+        </div>
+        <div class="stat-card glass">
+            <h3>📈 เฉลี่ยต่อวันสำรวจ</h3>
+            <div class="stat-value">
+                <span id="valAvg">0</span> <span class="stat-unit">จุด/วัน</span>
+            </div>
+            <div class="flex-between text-muted">
+                <span>เฉลี่ยตลอดโครงการ</span>
+            </div>
+        </div>
+    </div>
+    <!-- Charts -->
+    <div class="grid-2">
+        <div class="glass">
+            <div class="stepper-header" style="margin-bottom:0.5rem">📊 การสำรวจรายวัน (10 วันล่าสุด)</div>
+            <div class="text-muted" style="margin-bottom: 1rem; font-size: 0.85rem;">จำนวนจุดที่บันทึกในแต่ละวัน</div>
+            <div class="chart-box">
+                <canvas id="dailyChart"></canvas>
+            </div>
+        </div>
+        <div class="glass">
+            <div class="stepper-header" style="margin-bottom:0.5rem">🍩 สัดส่วนชนิดโคมไฟ</div>
+            <div class="text-muted" id="lampTypeSubtitle" style="margin-bottom: 1rem; font-size: 0.85rem;">จากทั้งหมดที่สำรวจแล้ว</div>
+            <div class="pie-chart-container" style="display: flex; align-items: center; gap: 1rem; height: 300px;">
+                <div class="chart-box" style="flex: 1; height: 100%; position: relative;">
+                    <canvas id="typeChart"></canvas>
+                    <div id="doughnutCenterText" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none;">
+                        <div id="donutTotal" style="font-size: 2.2rem; font-weight: bold; color: var(--text-main); line-height: 1.2;">0</div>
+                        <div style="font-size: 0.9rem; color: var(--text-muted);">จำนวนโคมไฟ</div>
+                    </div>
+                </div>
+                <div style="flex: 1.2; display: flex; flex-direction: column; gap: 0.8rem; overflow-y: auto; max-height: 100%; padding-right: 10px;">
+                    <div id="customLegend" style="display: flex; flex-direction: column; gap: 0.8rem;">
+                        <!-- รายการ Legend จะถูกสร้างจาก JS -->
+                    </div>
+                    <!-- ตู้ควบคุม Card (แยกจากโคมไฟ) -->
+                    <div id="cabinetCard" style="display: none; margin-top: 0.5rem; padding: 0.8rem 1rem; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+                         <div style="display: flex; align-items: center; justify-content: flex-start; gap: 0.5rem;">
+                             <div style="width: 12px; height: 12px; border-radius: 3px; background: #64748b; margin-right: 0.25rem;"></div>
+                             <span style="font-size: 1rem; font-weight: 500;">ตู้ควบคุมจำนวน</span>
+                             <span id="cabinetTotal" style="font-size: 1.1rem; font-weight: bold; color: var(--text-main); margin-left: 0.25rem;">0</span>
+                             <span style="font-size: 0.85rem; color: var(--text-muted);">ตู้</span>
+                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Community Lamp Types Chart -->
+    <div class="glass" style="margin-bottom: 1rem;">
+        <div class="flex-between" style="margin-bottom:0.5rem">
+            <div class="stepper-header" style="margin-bottom:0">🏙️ สัดส่วนชนิดโคมไฟแยกตามชุมชน</div>
+            <select id="communityFilter" style="padding: 0.4rem 0.8rem; border-radius: 6px; background: var(--card-bg); color: var(--text-main); border: 1px solid var(--card-border); font-family: 'Prompt', sans-serif; font-size: 0.9rem; cursor: pointer; outline: none;">
+                <option value="all">ทั้งหมด (All)</option>
+            </select>
+        </div>
+        <div class="text-muted" style="margin-bottom: 1rem; font-size: 0.85rem;">จำนวนโคมไฟแต่ละชนิดในแต่ละชุมชน (เรียงจากมากไปน้อย)</div>
+        <div id="htmlChartLegend" style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; justify-content: center; font-size: 0.85rem;"></div>
+        <div id="chartTooltip" style="display: none; position: fixed; background: var(--card-bg); border: 1px solid var(--card-border); color: var(--text-main); padding: 8px 12px; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 9999; font-family: 'Prompt', sans-serif; font-size: 0.85rem; pointer-events: none; transform: translate(-50%, -100%); margin-top: -10px;"></div>
+        <div class="chart-box" style="position: relative; width: 100%; overflow-y: auto; overflow-x: hidden; max-height: 550px; padding-right: 5px;">
+            <div id="communityLampChartContainer" style="display: none;">
+                <canvas id="communityLampChart"></canvas>
+            </div>
+            <ul id="htmlStackedChartList" style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 15px;"></ul>
+        </div>
+    </div>
+    <!-- Bottom Lists -->
+    <div class="grid-3">
+        <div class="glass">
+            <div class="stepper-header" style="margin-bottom:0">🏠 ความหนาแน่นตามชุมชน</div>
+            <div class="flex-between text-muted" style="font-size: 0.75rem; margin-bottom: 0.5rem;">
+                <span>จำนวนจุดสำรวจ เรียงจากมากไปน้อย</span>
+                <span id="communityCountLabel" style="color: var(--primary);"></span>
+            </div>
+            <ul class="density-list" id="communityList" style="max-height: 420px; overflow-y: auto; padding-right: 4px;">
+                <!-- Injected via JS -->
+            </ul>
+        </div>
+        
+        <div class="glass">
+            <div class="flex-between" style="margin-bottom:0">
+                <div class="stepper-header" style="margin-bottom:0">🛣️ ความหนาแน่นตามซอย</div>
+                <input type="text" id="soiSearch" placeholder="ค้นหาซอย/ถนน..." style="padding: 0.3rem 0.6rem; border-radius: 6px; background: var(--card-bg); color: var(--text-main); border: 1px solid var(--card-border); font-family: 'Prompt', sans-serif; font-size: 0.85rem; outline: none; width: 140px;">
+            </div>
+            <div class="flex-between text-muted" style="font-size: 0.75rem; margin-bottom: 0.5rem; margin-top: 0.5rem;">
+                <span>เรียงจากมากไปน้อย</span>
+                <span id="soiCountLabel" style="color: var(--primary);"></span>
+            </div>
+            <ul class="density-list" id="soiList" style="max-height: 420px; overflow-y: auto; padding-right: 4px;">
+                <!-- Injected via JS -->
+            </ul>
+        </div>
+        <div class="glass">
+            <div class="stepper-header" style="margin-bottom:0">🕒 กิจกรรมล่าสุด</div>
+            <div class="text-muted" style="font-size: 0.75rem;">รายการที่บันทึกล่าสุด พร้อมเวลา</div>
+            <div class="activity-list" id="activityList">
+                <!-- Injected via JS -->
+            </div>
+        </div>
+    </div>
+    <script>
+        window.INITIAL_DATA = null;
+        window.WEB_APP_API = 'https:' + String.fromCharCode(47, 47) + 'script.google.com/macros/s/AKfycbzgyxiX20-OzdCThoDgFNnRfqO5LYAPp5GLyup0_WflWBF2GdX4N0ZQhKWW9mKFjz1Ggg/exec?api=data';
+        let dailyChartInstance = null;
+        let typeChartInstance = null;
+        let communityLampChartInstance = null;
+        let globalCommunityLampStats = [];
+        let globalLampTypes = [];
+        let globalSoiStats = [];
+        document.addEventListener("DOMContentLoaded", () => {
+            // Setup Theme Toggle
+            const savedTheme = localStorage.getItem('dashboard_theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            const themeBtn = document.getElementById('themeToggle');
+            themeBtn.innerText = savedTheme === 'dark' ? '☀️' : '🌙';
+            
+            themeBtn.addEventListener('click', () => {
+                let currentTheme = document.documentElement.getAttribute('data-theme');
+                let newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('dashboard_theme', newTheme);
+                themeBtn.innerText = newTheme === 'dark' ? '☀️' : '🌙';
+                
+                // Redraw charts to update text colors based on theme if needed
+                if (dailyChartInstance) {
+                    const isLight = newTheme === 'light';
+                    dailyChartInstance.options.plugins.datalabels.color = isLight ? '#475569' : '#ffffff';
+                    dailyChartInstance.options.scales.y.grid.color = isLight ? '#e2e8f0' : '#334155';
+                    dailyChartInstance.options.scales.y.ticks.color = isLight ? '#64748b' : '#94a3b8';
+                    dailyChartInstance.options.scales.x.ticks.color = isLight ? '#64748b' : '#94a3b8';
+                    dailyChartInstance.update();
+                }
+                if (communityLampChartInstance) {
+                    const isLight = newTheme === 'light';
+                    communityLampChartInstance.options.scales.x.grid.color = isLight ? '#e2e8f0' : '#334155';
+                    communityLampChartInstance.options.scales.x.ticks.color = isLight ? '#64748b' : '#94a3b8';
+                    communityLampChartInstance.options.scales.y.ticks.color = isLight ? '#475569' : '#e2e8f0';
+                    communityLampChartInstance.options.plugins.legend.labels.color = isLight ? '#475569' : '#e2e8f0';
+                    communityLampChartInstance.update();
+                }
+            });
+            
+            // Filter Change Event
+            document.getElementById('communityFilter').addEventListener('change', function(e) {
+                const selected = e.target.value;
+                if (selected === 'all') {
+                    renderCommunityLampChart(globalCommunityLampStats, globalLampTypes);
+                } else {
+                    const filteredStats = globalCommunityLampStats.filter(s => s.community === selected);
+                    renderCommunityLampChart(filteredStats, globalLampTypes);
+                }
+            });
+            
+            // Soi Search Event
+            document.getElementById('soiSearch').addEventListener('input', function(e) {
+                const keyword = e.target.value.toLowerCase().trim();
+                if (keyword === '') {
+                    renderSoiList(globalSoiStats);
+                } else {
+                    const filteredSois = globalSoiStats.filter(s => s.soi.toLowerCase().includes(keyword) || s.community.toLowerCase().includes(keyword));
+                    renderSoiList(filteredSois);
+                }
+            });
+            
+            loadData();
+        });
+        function loadData() {
+            // ⚡ 1. ถ้ามีข้อมูลฝังมาจาก Server (Apps Script) ให้แสดงผลทันทีภายใน 0.01 วินาที!
+            if (window.INITIAL_DATA && window.INITIAL_DATA.status === 'success') {
+                console.log("⚡ [Layer 1] Loaded immediately from Server-Injected Data!");
+                renderDashboard(window.INITIAL_DATA);
+                return;
+            }
+
+            const loader = document.getElementById('loader');
+            if (loader) loader.style.display = 'flex';
+
+            // ⚡ 2. พยายามดึงผ่าน Web App API ก่อน ถ้าโฮสต์อยู่บนเว็บ (เช่น Netlify หรือเซิร์ฟเวอร์ภายนอก)
+            if (window.location.protocol.startsWith('http') && window.WEB_APP_API) {
+                console.log("⚡ [Layer 2] Trying Apps Script Web App API...");
+                const apiUrl = window.WEB_APP_API;
+                fetch(apiUrl)
+                    .then(res => res.json())
+                    .then(res => {
+                        if (res && res.status === 'success') {
+                            console.log("⚡ [Layer 2] Apps Script Fetch Success!");
+                            renderDashboard(res);
+                        } else {
+                            console.warn("Apps Script API returned non-success response (e.g. online test mode):", res);
+                            fetchLiveGoogleSheetGViz();
+                        }
+                    })
+                    .catch(err => {
+                        console.warn("Apps Script Fetch failed (CORS/Permissions/Down):", err);
+                        fetchLiveGoogleSheetGViz();
+                    });
+                return;
+            }
+
+            // ⚡ 3. หากไม่ได้โฮสต์หรือไม่มี Web App ให้ดึงสดจาก Google Sheet ตรงๆ ทันที
+            fetchLiveGoogleSheetGViz();
+        }
+
+        // ⚡ [Layer 3] ดึงข้อมูลสดจาก Google Sheet ตรงๆ ผ่าน GViz JSONP (ไม่ติด CORS, รองรับ Netlify 100%)
+        function fetchLiveGoogleSheetGViz() {
+            console.log("⚡ [Layer 3] Connecting directly to Google Sheet via GViz JSONP...");
+            const sheetId = '1ItTEV7wSB5M-99TUgYzl8v2YL0NZoZXYREzwE-a9u40';
+            const callbackName = 'gvizCallback_' + Math.floor(Math.random() * 1000000);
+            
+            let isHandled = false;
+            const timeoutTimer = setTimeout(() => {
+                if (!isHandled) {
+                    isHandled = true;
+                    console.warn("GViz timeout, falling back to offline data...");
+                    loadOfflineFallback();
+                }
+            }, 10000);
+
+            window[callbackName] = function(json) {
+                if (isHandled) return;
+                isHandled = true;
+                clearTimeout(timeoutTimer);
+                try {
+                    delete window[callbackName];
+                } catch(e) {}
+                const scriptEl = document.getElementById('gvizScriptTag');
+                if (scriptEl && scriptEl.parentNode) scriptEl.parentNode.removeChild(scriptEl);
+
+                if (json && json.table && json.table.rows && json.table.rows.length > 0) {
+                    console.log("⚡ [Layer 3] Live Google Sheet data loaded successfully! Rows:", json.table.rows.length);
+                    const processed = processGvizTable(json.table);
+                    globalAllRecords = processed.allRecords;
+                    currentFilteredRecords = processed.allRecords;
+                    renderDashboard(processed.dashboardData);
+                    populateSoiOptions(processed.allRecords);
+                    updateFilterStatsBadge(processed.allRecords.length, processed.allRecords.length);
+                } else {
+                    console.warn("Invalid GViz data format, using offline fallback...");
+                    loadOfflineFallback();
+                }
+            };
+
+            const script = document.createElement('script');
+            script.id = 'gvizScriptTag';
+            script.src = 'https:' + String.fromCharCode(47, 47) + 'docs.google.com/spreadsheets/d/' + sheetId + '/gviz/tq?tqx=responseHandler:' + callbackName;
+            script.onerror = function(err) {
+                if (isHandled) return;
+                isHandled = true;
+                clearTimeout(timeoutTimer);
+                console.warn("GViz script load error:", err);
+                loadOfflineFallback();
+            };
+            document.head.appendChild(script);
+        }
+
+        // แปลงตาราง Google Sheet GViz ให้เป็นข้อมูลแดชบอร์ดและรายการทั้งหมดแบบ Real-time
+        function processGvizTable(table) {
+            const rows = table.rows || [];
+            const records = [];
+            const months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+            
+            for (let i = 0; i < rows.length; i++) {
+                const r = rows[i];
+                if (!r || !r.c) continue;
+                const c = r.c;
+                const id = c[0] && c[0].v != null ? String(c[0].v).trim() : '';
+                if (!id) continue;
+                
+                let dateObj = null;
+                let dStr = '';
+                let tStr = '';
+                
+                if (c[1]) {
+                    if (c[1].f) {
+                        const parts = String(c[1].f).trim().split(' ');
+                        const dateParts = parts[0].split(/[-/]/);
+                        if (dateParts.length === 3) {
+                            let p1 = parseInt(dateParts[0], 10);
+                            let p2 = parseInt(dateParts[1], 10);
+                            let p3 = parseInt(dateParts[2], 10);
+                            let y, m, d;
+                            if (p3 > 1000) { y = p3; d = p1; m = p2; }
+                            else if (p1 > 1000) { y = p1; m = p2; d = p3; }
+                            else { y = 2026; d = p1; m = p2; }
+                            if (y > 2500) y -= 543;
+                            dStr = y + '-' + String(m).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+                            dateObj = new Date(y, m - 1, d);
+                        }
+                        tStr = parts[1] || '';
+                    } else if (c[1].v && typeof c[1].v === 'string' && c[1].v.startsWith('Date(')) {
+                        const nums = c[1].v.replace('Date(', '').replace(')', '').split(',').map(n => parseInt(n.trim(), 10));
+                        let y = nums[0];
+                        if (y > 2500) y -= 543;
+                        let m = (nums[1] || 0) + 1;
+                        let d = nums[2] || 1;
+                        let h = nums[3] || 0;
+                        let min = nums[4] || 0;
+                        let s = nums[5] || 0;
+                        dStr = y + '-' + String(m).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+                        tStr = String(h).padStart(2, '0') + ':' + String(min).padStart(2, '0');
+                        dateObj = new Date(y, m - 1, d, h, min, s);
+                    }
+                }
+                
+                const survRaw = c[2] && c[2].v != null ? String(c[2].v).trim() : '';
+                const surv = survRaw ? survRaw.split('@')[0] : '';
+                const comm = c[3] && c[3].v != null ? String(c[3].v).trim() : 'ไม่ระบุ';
+                const soi = c[4] && c[4].v != null ? String(c[4].v).trim() : 'ไม่ระบุ';
+                const lamp = c[5] && c[5].v != null ? String(c[5].v).trim() : 'ไม่ระบุ';
+                const pic = c[6] && c[6].v != null ? String(c[6].v).trim() : '';
+                const gps = c[7] && c[7].v != null ? String(c[7].v).trim() : '';
+                const rem = c[8] && c[8].v != null ? String(c[8].v).trim() : '';
+                
+                records.push({
+                    id: id,
+                    d: dStr,
+                    t: tStr,
+                    s: surv,
+                    c: comm,
+                    soi: soi,
+                    lamp: lamp,
+                    gps: gps,
+                    pic: pic,
+                    rem: rem,
+                    dateObj: dateObj
+                });
+            }
+            
+            const totalPoints = records.length;
+            const commSet = new Set();
+            const survSet = new Set();
+            const lampCounts = {};
+            const commCounts = {};
+            const soiCounts = {};
+            const dailyMap = {};
+            const commLampTypes = {};
+            let cabinetTotal = 0;
+            let firstDate = null;
+            let latestDate = null;
+            
+            const now = new Date();
+            const todayStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+            const yDate = new Date(now.getTime() - 86400000);
+            const yestStr = yDate.getFullYear() + '-' + String(yDate.getMonth() + 1).padStart(2, '0') + '-' + String(yDate.getDate()).padStart(2, '0');
+            
+            let todayCount = 0;
+            let yesterdayCount = 0;
+            
+            records.forEach(r => {
+                if (r.c) commSet.add(r.c);
+                if (r.s) survSet.add(r.s);
+                if (r.dateObj) {
+                    if (!firstDate || r.dateObj < firstDate) firstDate = r.dateObj;
+                    if (!latestDate || r.dateObj > latestDate) latestDate = r.dateObj;
+                }
+                if (r.d === todayStr) todayCount++;
+                if (r.d === yestStr) yesterdayCount++;
+                if (r.d) {
+                    dailyMap[r.d] = (dailyMap[r.d] || 0) + 1;
+                }
+                lampCounts[r.lamp] = (lampCounts[r.lamp] || 0) + 1;
+                if (r.lamp !== 'ตู้ควบคุม') {
+                    commCounts[r.c] = (commCounts[r.c] || 0) + 1;
+                    const soiKey = r.soi + ' (' + r.c + ')';
+                    soiCounts[soiKey] = (soiCounts[soiKey] || 0) + 1;
+                }
+                if (!commLampTypes[r.c]) commLampTypes[r.c] = {};
+                commLampTypes[r.c][r.lamp] = (commLampTypes[r.c][r.lamp] || 0) + 1;
+            });
+            
+            const dailyStats = Object.keys(dailyMap).sort().slice(-10).map(k => {
+                const parts = k.split('-');
+                return {
+                    dateLabel: parseInt(parts[2], 10) + ' ' + months[parseInt(parts[1], 10) - 1],
+                    fullDate: k,
+                    count: dailyMap[k]
+                };
+            });
+            
+            const filteredLampKeys = Object.keys(lampCounts).filter(k => {
+                if (k === 'ตู้ควบคุม') {
+                    cabinetTotal = lampCounts[k];
+                    return false;
+                }
+                return true;
+            });
+            const lampTotalPoints = filteredLampKeys.reduce((sum, k) => sum + lampCounts[k], 0);
+            const lampTypes = filteredLampKeys.map(k => ({
+                type: k,
+                count: lampCounts[k],
+                percentage: lampTotalPoints > 0 ? ((lampCounts[k] / lampTotalPoints) * 100).toFixed(1) : '0'
+            })).sort((a, b) => b.count - a.count);
+            
+            const densityByCommunity = Object.keys(commCounts).map(k => ({
+                name: k,
+                count: commCounts[k]
+            })).sort((a, b) => b.count - a.count);
+            
+            const communityLampStats = Object.keys(commLampTypes).map(comm => {
+                let tot = 0;
+                for (let t in commLampTypes[comm]) {
+                    if (t !== 'ตู้ควบคุม') tot += commLampTypes[comm][t];
+                }
+                return {
+                    community: comm,
+                    total: tot,
+                    types: commLampTypes[comm]
+                };
+            }).sort((a, b) => b.total - a.total);
+            
+            const densityBySoi = Object.keys(soiCounts).map(k => {
+                const m = k.match(/(.*)\s\((.*)\)$/);
+                return {
+                    soi: m ? m[1] : k,
+                    community: m ? m[2] : '',
+                    count: soiCounts[k]
+                };
+            }).sort((a, b) => b.count - a.count);
+            
+            const recentActivities = records.slice(-10).reverse().map(r => {
+                let timeStr = '';
+                if (r.dateObj) {
+                    timeStr = r.dateObj.getDate() + ' ' + months[r.dateObj.getMonth()] + ' ' + r.t;
+                } else {
+                    timeStr = r.t;
+                }
+                return {
+                    timeStr: timeStr,
+                    surveyor: r.s || 'ไม่ระบุ',
+                    community: r.c,
+                    soi: r.soi,
+                    lampType: r.lamp
+                };
+            });
+            
+            let totalSurveyDays = 1;
+            if (firstDate && latestDate) {
+                totalSurveyDays = Math.ceil(Math.abs(latestDate - firstDate) / 86400000) + 1;
+            }
+            const averagePerDay = Math.round(totalPoints / totalSurveyDays);
+            
+            const nowBkk = new Date();
+            const thaiYear = nowBkk.getFullYear() + 543;
+            const lastUpdateStr = nowBkk.getDate() + ' ' + months[nowBkk.getMonth()] + ' ' + thaiYear + ' • ' + String(nowBkk.getHours()).padStart(2, '0') + ':' + String(nowBkk.getMinutes()).padStart(2, '0');
+            
+            return {
+                dashboardData: {
+                    status: 'success',
+                    data: {
+                        totalPoints,
+                        totalCommunities: commSet.size,
+                        todayCount,
+                        yesterdayCount,
+                        totalSurveyors: survSet.size,
+                        allSurveyors: Array.from(survSet).sort(),
+                        averagePerDay,
+                        lastUpdateStr,
+                        dailyStats,
+                        lampTypes,
+                        cabinetTotal,
+                        lampTotalPoints,
+                        communityLampStats,
+                        densityByCommunity,
+                        densityBySoi,
+                        recentActivities
+                    }
+                },
+                allRecords: records.map(r => ({
+                    id: r.id, d: r.d, t: r.t, s: r.s, c: r.c, soi: r.soi, lamp: r.lamp, gps: r.gps, pic: r.pic, rem: r.rem
+                }))
+            };
+        }
+
+        // ⚡ [Layer 4] สำรองกรณีออฟไลน์ 100% ไม่มีอินเทอร์เน็ต
+        function loadOfflineFallback() {
+            setTimeout(() => {
+                renderDashboard(JSON.stringify({
+                    status: 'success',
+                    data: {
+                        empty: false,
+                        totalPoints: 6440,
+                        totalCommunities: 29,
+                        todayCount: 0,
+                        yesterdayCount: 0,
+                        totalSurveyors: 8,
+                        allSurveyors: ["piyanuch6012", "ชัยวัฒน์", "ปนัดดา", "สมชาย", "วิภา", "กิตติ"],
+                        averagePerDay: 68,
+                        lastUpdateStr: "ข้อมูลสำรอง (ออฟไลน์)",
+                        dailyStats: [
+                            { dateLabel: "2 มิ.ย.", count: 120 },
+                            { dateLabel: "3 มิ.ย.", count: 250 },
+                            { dateLabel: "4 มิ.ย.", count: 410 },
+                            { dateLabel: "5 มิ.ย.", count: 180 },
+                            { dateLabel: "6 มิ.ย.", count: 95 },
+                            { dateLabel: "7 มิ.ย.", count: 305 },
+                            { dateLabel: "8 มิ.ย.", count: 498 },
+                            { dateLabel: "9 มิ.ย.", count: 327 },
+                            { dateLabel: "10 มิ.ย.", count: 273 },
+                            { dateLabel: "11 มิ.ย.", count: 1115 }
+                        ],
+                        lampTypes: [
+                            { type: "ฟลูออเรสเซนต์", count: 3458, percentage: "55.1" },
+                            { type: "LED", count: 1951, percentage: "31.1" },
+                            { type: "แสงจันทร์/โซเดียม", count: 640, percentage: "10.2" },
+                            { type: "ไฟ ขั้ว E27", count: 104, percentage: "1.7" },
+                            { type: "ไฮแมส 20 m", count: 105, percentage: "1.7" },
+                            { type: "อื่นๆ", count: 18, percentage: "0.3" }
+                        ],
+                        cabinetTotal: 164,
+                        lampTotalPoints: 6276,
+                        communityLampStats: [
+                            { community: "หนองสนม-ปักป่า", total: 540, types: { "ฟลูออเรสเซนต์": 320, "LED": 220 } },
+                            { community: "เนินพระ", total: 507, types: { "ฟลูออเรสเซนต์": 200, "LED": 307 } },
+                            { community: "ช้างอำเภอ-ทางไผ่", total: 451, types: { "ฟลูออเรสเซนต์": 151, "LED": 300 } }
+                        ],
+                        densityByCommunity: [
+                            { name: "หนองสนม-ปักป่า", count: 540 },
+                            { name: "เนินพระ", count: 507 },
+                            { name: "ช้างอำเภอ-ทางไผ่", count: 451 },
+                            { name: "สองพี่น้อง", count: 308 },
+                            { name: "ท่าข้าม", count: 250 }
+                        ],
+                        densityBySoi: [
+                            { soi: "ถนน เลียบชายฝั่ง", community: "เนินพระ", count: 236 },
+                            { soi: "ถนน ราษฎร์บำรุง", community: "ช้างอำเภอ-ทางไผ่", count: 140 },
+                            { soi: "ซอย นครระยอง 1 ซอย 1", community: "หนองสนม-ปักป่า", count: 95 }
+                        ],
+                        recentActivities: [
+                            { timeStr: "08:42", surveyor: "piyanuch6012", community: "หนองสนม-ปักป่า", soi: "ซอย นครระยอง 1 ซอย 1", lampType: "ฟลูออเรสเซนต์" }
+                        ]
+                    }
+                }));
+            }, 500);
+        }
+        function renderDashboard(responseStr) {
+            const loader = document.getElementById('loader');
+            if (loader) loader.style.display = 'none';
+            try {
+                const response = typeof responseStr === 'string' ? JSON.parse(responseStr) : responseStr;
+                
+                if (!response || response.status !== 'success') {
+                    alert("เกิดข้อผิดพลาดจากเซิร์ฟเวอร์: " + (response ? response.message : 'ไม่สามารถอ่านข้อมูลได้'));
+                    return;
+                }
+                const data = response.data;
+                if (!data || data.empty) {
+                    alert("ไม่พบข้อมูลในระบบ หรือ Google Sheet ยังว่างเปล่า");
+                    return;
+                }
+            // Update Top Stats
+            document.getElementById('valTotal').innerText = data.totalPoints.toLocaleString();
+            document.getElementById('valTotalComm').innerText = data.totalCommunities;
+            document.getElementById('valSurveyors').innerText = data.totalSurveyors;
+            document.getElementById('valAvg').innerText = data.averagePerDay.toLocaleString();
+            document.getElementById('lastUpdateText').innerText = "ข้อมูล ณ: " + data.lastUpdateStr;
+            // วันนี้ = todayCount (จำนวนที่สำรวจวันนี้)
+            // เมื่อวาน = yesterdayCount (จำนวนที่สำรวจเมื่อวาน)
+            // ส่วนต่าง = วันนี้ - เมื่อวาน
+            const todayCount   = data.todayCount;
+            const yestCount    = data.yesterdayCount;
+            const diff         = todayCount - yestCount;
+            document.getElementById('valToday').innerText     = todayCount.toLocaleString();
+            document.getElementById('valYesterday').innerText = yestCount.toLocaleString() + ' จุด';
+            const badge = document.getElementById('valTodayBadge');
+            if (todayCount === 0) {
+                badge.innerText = 'ยังไม่มีข้อมูลวันนี้';
+                badge.style.color      = 'var(--text-muted)';
+                badge.style.background = 'rgba(148,163,184,0.15)';
+            } else if (diff > 0) {
+                badge.innerText = '+' + diff.toLocaleString() + ' จากเมื่อวาน';
+                badge.style.color      = 'var(--success)';
+                badge.style.background = 'rgba(16,185,129,0.15)';
+            } else if (diff < 0) {
+                badge.innerText = diff.toLocaleString() + ' จากเมื่อวาน';
+                badge.style.color      = 'var(--danger)';
+                badge.style.background = 'rgba(239,68,68,0.15)';
+            } else {
+                badge.innerText = '= เท่ากันกับเมื่อวาน';
+                badge.style.color      = 'var(--text-muted)';
+                badge.style.background = 'rgba(148,163,184,0.15)';
+            }
+            // Update Cabinet Card
+            if (data.cabinetTotal !== undefined && data.cabinetTotal > 0) {
+                document.getElementById('cabinetCard').style.display = 'flex';
+                document.getElementById('cabinetTotal').innerText = data.cabinetTotal.toLocaleString();
+            } else {
+                document.getElementById('cabinetCard').style.display = 'none';
+            }
+            // Store Globals for filtering
+            globalOriginalData = data;
+            globalCommunityLampStats = data.communityLampStats || [];
+            globalLampTypes = data.lampTypes || [];
+            globalSoiStats = data.densityBySoi || [];
+            
+            // Setup Advanced Filters from summary data immediately
+            setupAdvancedFiltersFromData(data);
+            
+            // Populate Community Chart Filter Dropdown
+            const filterSelect = document.getElementById('communityFilter');
+            filterSelect.innerHTML = '<option value="all">ทั้งหมด (All)</option>';
+            if (data.communityLampStats) {
+                data.communityLampStats.forEach(stat => {
+                    const opt = document.createElement('option');
+                    opt.value = stat.community;
+                    opt.innerText = stat.community;
+                    filterSelect.appendChild(opt);
+                });
+            }
+            
+            // Render Charts
+            renderDailyChart(data.dailyStats);
+            renderTypeChart(data.lampTypes);
+            renderCommunityLampChart(globalCommunityLampStats, globalLampTypes);
+            // Render Lists
+            renderCommunityList(data.densityByCommunity, data.totalPoints);
+            renderSoiList(data.densityBySoi, data.totalPoints);
+            renderActivityList(data.recentActivities);
+
+            // ดึงข้อมูลละเอียด 6,439 จุดในพื้นหลัง โดยไม่บล็อกหน้าจอแรก
+            setTimeout(() => {
+                loadDetailedRecordsInBackground();
+            }, 300);
+            } catch (err) {
+                console.error("renderDashboard error:", err);
+                alert("เกิดข้อผิดพลาดในการประมวลผลข้อมูล: " + err.message);
+            }
+        }
+        function renderDailyChart(stats) {
+            const ctx = document.getElementById('dailyChart').getContext('2d');
+            if (dailyChartInstance) dailyChartInstance.destroy();
+            // สมัครใช้งานปลั๊กอิน datalabels
+            Chart.register(ChartDataLabels);
+            const labels = stats.map(s => s.dateLabel);
+            const data = stats.map(s => s.count);
+            // สร้าง Gradient สำหรับแท่งปกติ - สีฟ้าเขียวสดใส
+            const greenGradient = ctx.createLinearGradient(0, 0, 0, 300);
+            greenGradient.addColorStop(0, '#00f5c8');  // เขียวมิ้นต์สว่างด้านบน
+            greenGradient.addColorStop(0.5, '#00c4a3'); // เขียวฟ้ากลาง
+            greenGradient.addColorStop(1, '#0e7490');   // ฟ้าเข้มด้านล่าง
+            // สร้าง Gradient สำหรับแท่งล่าสุด - ส้มอำพันสว่าง
+            const orangeGradient = ctx.createLinearGradient(0, 0, 0, 300);
+            orangeGradient.addColorStop(0, '#ffe033');  // เหลืองทองสว่าง
+            orangeGradient.addColorStop(0.5, '#ffb300'); // ส้มทอง
+            orangeGradient.addColorStop(1, '#e65c00');   // ส้มเข้มด้านล่าง
+            // กำหนดสีให้แต่ละแท่ง (แท่งสุดท้ายสีส้มทอง)
+            const bgColors = data.map((_, i) => i === data.length - 1 ? orangeGradient : greenGradient);
+            dailyChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'จำนวนจุด',
+                        data: data,
+                        backgroundColor: bgColors,
+                        borderRadius: { topLeft: 6, topRight: 6, bottomLeft: 0, bottomRight: 0 },
+                        barThickness: 28,
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: {
+                        padding: { top: 30 } // เผื่อที่ให้ตัวเลขด้านบน
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: {
+                            color: document.documentElement.getAttribute('data-theme') === 'light' ? '#475569' : '#ffffff',
+                            anchor: 'end',
+                            align: 'top',
+                            offset: 4,
+                            font: { family: 'Prompt', weight: '600', size: 13 },
+                            formatter: function(value) {
+                                return value.toLocaleString();
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: document.documentElement.getAttribute('data-theme') === 'light' ? '#e2e8f0' : '#334155' },
+                            ticks: { color: document.documentElement.getAttribute('data-theme') === 'light' ? '#64748b' : '#94a3b8' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#94a3b8' }
+                        }
+                    }
+                }
+            });
+        }
+        function renderTypeChart(types) {
+            const ctx = document.getElementById('typeChart').getContext('2d');
+            if (typeChartInstance) typeChartInstance.destroy();
+            // อัปเดตข้อความบอกจำนวนชนิดโคมไฟ
+            document.getElementById('lampTypeSubtitle').innerText = `พบโคมไฟทั้งหมด ${types.length} ชนิด จากที่สำรวจแล้ว`;
+            // คำนวณจำนวนจุดทั้งหมดสำหรับใส่ตรงกลางวงแหวน
+            const totalPoints = types.reduce((sum, t) => sum + t.count, 0);
+            document.getElementById('donutTotal').innerText = totalPoints.toLocaleString();
+            const labels = types.map(t => t.type);
+            const data = types.map(t => t.count);
+            // Colors matching the mockup theme
+            const colors = ['#f87171', '#34d399', '#fbbf24', '#a78bfa', '#38bdf8', '#94a3b8', '#f472b6'];
+            // สร้าง Custom Legend HTML
+            const legendHtml = types.map((t, index) => {
+                const color = colors[index % colors.length];
+                return `
+                    <div class="custom-legend-item">
+                        <div class="custom-legend-color" style="background-color: ${color}"></div>
+                        <div class="custom-legend-label" title="${t.type}">${t.type}</div>
+                        <div class="custom-legend-value">${t.count.toLocaleString()}</div>
+                        <div class="custom-legend-percent">(${t.percentage}%)</div>
+                    </div>
+                `;
+            }).join('');
+            document.getElementById('customLegend').innerHTML = legendHtml;
+            typeChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: colors,
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '75%', // ทำให้วงแหวนบางลง เพื่อให้ข้อความตรงกลางมีพื้นที่
+                    plugins: {
+                        legend: { display: false }, // ซ่อน legend เดิมของ ChartJS
+                        datalabels: { display: false }, // ซ่อนตัวเลขบนกราฟโดนัท
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ` ${context.label}: ${context.raw.toLocaleString()} จุด`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        function renderCommunityList(communities, maxVal) {
+            const ul = document.getElementById('communityList');
+            ul.innerHTML = '';
+            const topMax = communities.length > 0 ? communities[0].count : 1;
+            
+            // แสดงจำนวนชุมชนทั้งหมด
+            const labelEl = document.getElementById('communityCountLabel');
+            if (labelEl) labelEl.innerText = communities.length + ' ชุมชน';
+            
+            let html = '';
+            communities.forEach((c, idx) => {
+                let w = (c.count / topMax) * 100;
+                html += `
+                    <li class="density-item">
+                        <div class="density-label" title="${c.name}">
+                            <span style="color:var(--text-muted);font-size:0.7rem;margin-right:4px">${idx+1}.</span>${c.name}
+                        </div>
+                        <div class="density-bar-container">
+                            <div class="density-bar" style="width: ${w}%; background-color: #0ea5e9;"></div>
+                        </div>
+                        <div class="density-count">${c.count}</div>
+                    </li>
+                `;
+            });
+            ul.innerHTML = html;
+        }
+        function renderSoiList(sois) {
+            const ul = document.getElementById('soiList');
+            ul.innerHTML = '';
+            const topMax = sois.length > 0 ? sois[0].count : 1;
+            
+            // แสดงจำนวนซอยทั้งหมด
+            const labelEl = document.getElementById('soiCountLabel');
+            if (labelEl) labelEl.innerText = sois.length + ' ซอย/ถนน';
+            
+            let html = '';
+            sois.forEach((s, idx) => {
+                let w = (s.count / topMax) * 100;
+                html += `
+                    <li class="density-item" style="align-items:flex-start;">
+                        <div class="density-label" style="white-space:normal;">
+                            <span style="color:var(--text-muted);font-size:0.7rem;margin-right:4px">${idx+1}.</span>${s.soi}
+                            <div style="font-size:0.7rem; color:var(--text-muted)">${s.community}</div>
+                        </div>
+                        <div class="density-bar-container" style="margin-top:0.4rem;">
+                            <div class="density-bar" style="width: ${w}%; background-color: #f59e0b;"></div>
+                        </div>
+                        <div class="density-count" style="margin-top:0.2rem;">${s.count}</div>
+                    </li>
+                `;
+            });
+            ul.innerHTML = html;
+        }
+        function renderCommunityLampChart(stats, lampTypes) {
+            const ul = document.getElementById('htmlStackedChartList');
+            const legendContainer = document.getElementById('htmlChartLegend');
+            if(!ul) return;
+            
+            const colors = ['#f87171', '#34d399', '#fbbf24', '#a78bfa', '#38bdf8', '#94a3b8', '#f472b6'];
+            const allTypes = lampTypes.map(t => t.type);
+            
+            let legendHtml = '';
+            allTypes.forEach((type, idx) => {
+                const color = colors[idx % colors.length];
+                legendHtml += `
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <span style="width: 12px; height: 12px; border-radius: 50%; background-color: ${color}; display: inline-block;"></span>
+                        <span style="color: var(--text-main);">${type}</span>
+                    </div>
+                `;
+            });
+            if(legendContainer) legendContainer.innerHTML = legendHtml;
+
+            if (!stats || stats.length === 0) {
+                ul.innerHTML = '<li class="text-muted text-center" style="padding: 20px;">ไม่พบข้อมูลตามเงื่อนไขที่เลือก</li>';
+                return;
+            }
+
+            const maxTotal = Math.max(...stats.map(s => s.total));
+            if(maxTotal <= 0) {
+                ul.innerHTML = '<li class="text-muted text-center" style="padding: 20px;">ไม่มีข้อมูล</li>';
+                return;
+            }
+
+            let html = '';
+            stats.forEach((s) => {
+                let barSegmentsHtml = '';
+                allTypes.forEach((type, idx) => {
+                    const count = s.types[type] || 0;
+                    if(count > 0) {
+                        const percentOfMax = (count / (maxTotal * 1.05)) * 100;
+                        const color = colors[idx % colors.length];
+                        const text = percentOfMax > 8 ? count.toLocaleString() : '';
+                        barSegmentsHtml += `
+                            <div onclick="showChartTooltip(event, '${s.community}', '${type}', ${count})" onmouseover="this.style.filter='brightness(1.15)'" onmouseout="this.style.filter='brightness(1)'" style="width: ${percentOfMax}%; background-color: ${color}; height: 100%; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.75rem; font-weight: 600; overflow: hidden; white-space: nowrap; transition: width 0.3s ease, filter 0.2s; cursor: pointer; text-shadow: 0 1px 2px rgba(0,0,0,0.4);">
+                                ${text}
+                            </div>
+                        `;
+                    }
+                });
+
+                html += `
+                    <li style="display: flex; flex-direction: column; gap: 4px;">
+                        <div style="font-size: 0.9rem; font-weight: 500; text-align: left; color: var(--text-main);">${s.community} <span class="text-muted" style="font-size: 0.8rem; font-weight: normal;">(รวม ${s.total})</span></div>
+                        <div style="display: flex; width: 100%; height: 24px; background-color: var(--glass-border); border-radius: 4px; overflow: hidden;">
+                            ${barSegmentsHtml}
+                        </div>
+                    </li>
+                `;
+            });
+            ul.innerHTML = html;
+        }
+        
+        let tooltipTimeout;
+        function showChartTooltip(e, community, type, count) {
+            const tooltip = document.getElementById('chartTooltip');
+            if (!tooltip) return;
+            tooltip.innerHTML = `<div style="font-weight:600; margin-bottom:4px; border-bottom:1px solid var(--card-border); padding-bottom:4px;">${community}</div>${type}: <span style="font-weight:600;">${count.toLocaleString()}</span> จุด`;
+            tooltip.style.display = 'block';
+            let x = e.clientX || (e.touches && e.touches[0].clientX) || e.pageX;
+            let y = e.clientY || (e.touches && e.touches[0].clientY) || e.pageY;
+            tooltip.style.left = x + 'px';
+            tooltip.style.top = y + 'px';
+            clearTimeout(tooltipTimeout);
+            tooltipTimeout = setTimeout(() => { tooltip.style.display = 'none'; }, 2500);
+        }
+
+        function renderActivityList(activities) {
+            const ul = document.getElementById('activityList');
+            let html = '';
+            
+            activities.forEach(a => {
+                let initial = a.surveyor ? a.surveyor.charAt(0).toUpperCase() : '?';
+                
+                // Color mapping for lamp type badge
+                let badgeColor = 'rgba(239, 68, 68, 0.3)';
+                let badgeTextColor = 'var(--danger)';
+                if(a.lampType.includes('LED')) { badgeColor = 'rgba(16, 185, 129, 0.3)'; badgeTextColor = 'var(--success)'; }
+                else if(a.lampType.includes('โซเดียม')) { badgeColor = 'rgba(245, 158, 11, 0.3)'; badgeTextColor = 'var(--warning)'; }
+                html += `
+                    <div class="activity-card">
+                        <div class="activity-icon">${initial}</div>
+                        <div class="activity-content">
+                            <div class="activity-title">
+                                <span>${a.surveyor}</span>
+                                <span style="font-weight:400; color:var(--text-muted); font-size:0.75rem;">${a.timeStr} น.</span>
+                            </div>
+                            <div class="activity-desc">
+                                บันทึก: ${a.soi} · ${a.community}
+                            </div>
+                            <span class="activity-badge" style="border-color:${badgeColor}; color:${badgeTextColor}">${a.lampType}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            ul.innerHTML = html;
+        }
+
+        // ==========================================================================
+        // ADVANCED FILTER & SEARCH SYSTEM LOGIC
+        // ==========================================================================
+        let globalAllRecords = [];
+        let globalOriginalData = null;
+        let currentFilteredRecords = [];
+        let filterDebounceTimer = null;
+        let currentPage = 1;
+        let pageSize = 15;
+
+        // Debounce input to prevent lagging while typing
+        function debounceFilter() {
+            const clearBtn = document.getElementById('advClearSearchBtn');
+            const val = document.getElementById('advSearchInput').value;
+            if (clearBtn) clearBtn.style.display = val ? 'block' : 'none';
+            
+            clearTimeout(filterDebounceTimer);
+            filterDebounceTimer = setTimeout(() => {
+                applyAdvancedFilters();
+            }, 250);
+        }
+
+        function clearSearchInput() {
+            document.getElementById('advSearchInput').value = '';
+            const clearBtn = document.getElementById('advClearSearchBtn');
+            if (clearBtn) clearBtn.style.display = 'none';
+            applyAdvancedFilters();
+        }
+
+        // Setup dropdowns immediately from dashboard summary data
+        function setupAdvancedFiltersFromData(data) {
+            if (!data) return;
+
+            populateSoiOptions(data.densityBySoi || []);
+
+            // 1. Community Select
+            const commSelect = document.getElementById('advCommunitySelect');
+            if (commSelect && data.densityByCommunity) {
+                commSelect.innerHTML = '<option value="all">ทุกชุมชน (ทั้งหมด)</option>';
+                data.densityByCommunity.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.name;
+                    opt.textContent = c.name;
+                    commSelect.appendChild(opt);
+                });
+            }
+
+            // 2. Lamp Type Select
+            const typeSelect = document.getElementById('advLampTypeSelect');
+            if (typeSelect && data.lampTypes) {
+                typeSelect.innerHTML = '<option value="all">ทุกชนิดโคมไฟ</option>';
+                data.lampTypes.forEach(t => {
+                    const opt = document.createElement('option');
+                    opt.value = t.type;
+                    opt.textContent = t.type;
+                    typeSelect.appendChild(opt);
+                });
+            }
+
+            // 3. Surveyor Select
+            const survSelect = document.getElementById('advSurveyorSelect');
+            if (survSelect && data.allSurveyors) {
+                survSelect.innerHTML = '<option value="all">ผู้สำรวจทุกคน</option>';
+                data.allSurveyors.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s;
+                    opt.textContent = s;
+                    survSelect.appendChild(opt);
+                });
+            }
+
+            updateFilterStatsBadge(data.totalPoints, data.totalPoints);
+        }
+
+        // ดึงข้อมูลละเอียดในพื้นหลัง (Background Fetch) หากยังไม่มีในหน่วยความจำ
+        function loadDetailedRecordsInBackground() {
+            // ถ้าดึงข้อมูลสดผ่าน Layer 3 GViz มาแล้ว รายการจุดสำรวจจะโหลดครบอยู่ในหน่วยความจำแล้ว ไม่ต้องดึงซ้ำ
+            if (globalAllRecords && globalAllRecords.length > 0) {
+                console.log("⚡ [Background] Records already loaded in memory (" + globalAllRecords.length + " items)");
+                return;
+            }
+
+            function processRecords(res) {
+                try {
+                    const parsed = typeof res === 'string' ? JSON.parse(res) : res;
+                    if (parsed && parsed.status === 'success' && parsed.records) {
+                        globalAllRecords = parsed.records.map(r => ({
+                            id: r[0], d: r[1], t: r[2], s: r[3], c: r[4],
+                            soi: r[5], lamp: r[6], gps: r[7], pic: r[8], rem: r[9]
+                        }));
+                        currentFilteredRecords = globalAllRecords;
+                        populateSoiOptions(globalAllRecords);
+                        updateFilterStatsBadge(globalAllRecords.length, globalAllRecords.length);
+                        
+                        // ประมวลผลตัวกรองทันทีหากผู้ใช้เลือกไว้ก่อนหน้า
+                        applyAdvancedFilters();
+                        
+                        const modal = document.getElementById('dataTableModal');
+                        if (modal && modal.style.display !== 'none') {
+                            renderDetailedTable(currentPage);
+                        }
+                    } else {
+                        // ถ้า Apps Script ตอบ status อื่น ให้ดึงผ่าน GViz JSONP
+                        fetchLiveGoogleSheetGViz();
+                    }
+                } catch (e) {
+                    console.warn("Background parse error:", e);
+                    fetchLiveGoogleSheetGViz();
+                }
+            }
+
+            // 1. ลองดึงผ่าน Direct Web API ก่อน
+            if (window.location.protocol.startsWith('http') && window.WEB_APP_API) {
+                const recUrl = window.WEB_APP_API.replace('api=data', 'api=records');
+                fetch(recUrl)
+                    .then(r => r.json())
+                    .then(processRecords)
+                    .catch(e => {
+                        console.warn("Fetch records fallback error:", e);
+                        fetchLiveGoogleSheetGViz();
+                    });
+                return;
+            }
+
+            // 2. ถ้าเปิดใน Apps Script แบบไม่มี Web API
+            if (typeof google !== 'undefined' && google.script && google.script.run) {
+                google.script.run.withSuccessHandler(processRecords).getAllRecordsCompact();
+            } else {
+                fetchLiveGoogleSheetGViz();
+            }
+        }
+
+        // Initialize Filter Dropdowns based on loaded records
+        function setupAdvancedFilters(records) {
+            if (!records || records.length === 0) return;
+
+            populateSoiOptions(records);
+
+            // Extract unique sets
+            const commSet = new Set();
+            const typeSet = new Set();
+            const survSet = new Set();
+
+            records.forEach(r => {
+                if (r.c && r.c !== 'ไม่ระบุ') commSet.add(r.c);
+                if (r.lamp && r.lamp !== 'ไม่ระบุ') typeSet.add(r.lamp);
+                if (r.s && r.s !== 'ไม่ระบุ') survSet.add(r.s);
+            });
+
+            // Populate Community Select
+            const commSelect = document.getElementById('advCommunitySelect');
+            commSelect.innerHTML = '<option value="all">ทุกชุมชน (ทั้งหมด)</option>';
+            Array.from(commSet).sort((a, b) => a.localeCompare(b, 'th')).forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c;
+                opt.textContent = c;
+                commSelect.appendChild(opt);
+            });
+
+            // Populate Lamp Type Select
+            const typeSelect = document.getElementById('advLampTypeSelect');
+            typeSelect.innerHTML = '<option value="all">ทุกชนิดโคมไฟ</option>';
+            Array.from(typeSet).sort((a, b) => a.localeCompare(b, 'th')).forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t;
+                opt.textContent = t;
+                typeSelect.appendChild(opt);
+            });
+
+            // Populate Surveyor Select
+            const survSelect = document.getElementById('advSurveyorSelect');
+            survSelect.innerHTML = '<option value="all">ผู้สำรวจทุกคน</option>';
+            Array.from(survSet).sort((a, b) => a.localeCompare(b, 'th')).forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s;
+                opt.textContent = s;
+                survSelect.appendChild(opt);
+            });
+
+            currentFilteredRecords = records;
+            updateFilterStatsBadge(records.length, records.length);
+        }
+
+        // เมื่อเลือกชุมชน ให้กรองตัวเลือกใน Dropdown ซอย/ถนน ให้ตรงกับชุมชนนั้น
+        function handleCommunityChange() {
+            const comm = document.getElementById('advCommunitySelect').value;
+            const soiSelect = document.getElementById('advSoiSelect');
+            if (soiSelect) soiSelect.value = 'all';
+
+            if (globalAllRecords && globalAllRecords.length > 0) {
+                const filtered = comm === 'all'
+                    ? globalAllRecords
+                    : globalAllRecords.filter(r => r.c === comm);
+                populateSoiOptions(filtered);
+            } else if (globalSoiStats && globalSoiStats.length > 0) {
+                const filtered = comm === 'all'
+                    ? globalSoiStats
+                    : globalSoiStats.filter(s => s.community === comm);
+                populateSoiOptions(filtered);
+            }
+            applyAdvancedFilters();
+        }
+
+        // เติมรายการซอย/ถนนลงใน dropdown สไตล์เดียวกับ ผู้สำรวจ / ชุมชน
+        function populateSoiOptions(items) {
+            const soiSelect = document.getElementById('advSoiSelect');
+            if (!soiSelect) return;
+
+            const currentVal = soiSelect.value;
+            const uniqueSois = new Set();
+            (items || []).forEach(item => {
+                const soi = typeof item === 'string' ? item : item && (item.soi || item.name);
+                const value = soi ? String(soi).trim() : '';
+                if (value && value !== 'ไม่ระบุ' && value !== '-') uniqueSois.add(value);
+            });
+
+            soiSelect.innerHTML = '<option value="all">ทุกซอย / ถนน (ทั้งหมด)</option>';
+            Array.from(uniqueSois)
+                .sort((a, b) => a.localeCompare(b, 'th'))
+                .forEach(soi => {
+                    const option = document.createElement('option');
+                    option.value = soi;
+                    option.textContent = soi;
+                    soiSelect.appendChild(option);
+                });
+
+            if (currentVal && uniqueSois.has(currentVal)) {
+                soiSelect.value = currentVal;
+            }
+        }
+
+        function updateFilterStatsBadge(matchCount, totalCount) {
+            const badge = document.getElementById('filterStatsBadge');
+            if (!badge) return;
+            if (matchCount === totalCount) {
+                badge.innerHTML = `⚡ ข้อมูลทั้งหมด <b>${totalCount.toLocaleString()}</b> จุด`;
+                badge.style.borderColor = 'rgba(56, 189, 248, 0.3)';
+                badge.style.color = 'var(--primary)';
+            } else {
+                const pct = totalCount > 0 ? ((matchCount / totalCount) * 100).toFixed(1) : 0;
+                badge.innerHTML = `🎯 ตรงเงื่อนไข: <b>${matchCount.toLocaleString()}</b> จุด (${pct}%)`;
+                badge.style.borderColor = 'rgba(16, 185, 129, 0.5)';
+                badge.style.color = 'var(--success)';
+            }
+        }
+
+        // Apply All Active Filters
+        function applyAdvancedFilters() {
+            if (!globalAllRecords || globalAllRecords.length === 0) return;
+
+            const keyword = document.getElementById('advSearchInput').value.trim().toLowerCase();
+            const comm = document.getElementById('advCommunitySelect').value;
+            const lamp = document.getElementById('advLampTypeSelect').value;
+            const surv = document.getElementById('advSurveyorSelect').value;
+            const soi = document.getElementById('advSoiSelect') ? document.getElementById('advSoiSelect').value : 'all';
+
+            const isFiltering = keyword !== '' || comm !== 'all' || lamp !== 'all' || surv !== 'all' || soi !== 'all';
+
+            // Filter records
+            currentFilteredRecords = globalAllRecords.filter(r => {
+                // 1. Keyword
+                if (keyword) {
+                    const match = (r.id && r.id.toLowerCase().includes(keyword)) ||
+                                  (r.soi && r.soi.toLowerCase().includes(keyword)) ||
+                                  (r.c && r.c.toLowerCase().includes(keyword)) ||
+                                  (r.s && r.s.toLowerCase().includes(keyword)) ||
+                                  (r.lamp && r.lamp.toLowerCase().includes(keyword)) ||
+                                  (r.gps && r.gps.toLowerCase().includes(keyword)) ||
+                                  (r.rem && r.rem.toLowerCase().includes(keyword));
+                    if (!match) return false;
+                }
+                // 2. Community
+                if (comm !== 'all' && r.c !== comm) return false;
+                // 3. Lamp Type
+                if (lamp !== 'all' && r.lamp !== lamp) return false;
+                // 4. Surveyor (เปรียบเทียบทั้งแบบเต็มและแบบตัด @gmail.com)
+                if (surv !== 'all') {
+                    const sNorm = (r.s || '').trim().toLowerCase().split('@')[0];
+                    const survNorm = surv.trim().toLowerCase().split('@')[0];
+                    if (sNorm !== survNorm && (r.s || '').trim().toLowerCase() !== surv.trim().toLowerCase()) return false;
+                }
+                // 5. Soi / Road Dropdown
+                if (soi !== 'all' && (r.soi || '').trim() !== soi) return false;
+
+                return true;
+            });
+
+            // Update active tags chips
+            renderActiveFilterTags({ keyword, comm, lamp, surv, soi });
+
+            // Recalculate and re-render dashboard components
+            recalculateAndRenderDashboard(currentFilteredRecords, isFiltering);
+
+            // Update stats badge
+            updateFilterStatsBadge(currentFilteredRecords.length, globalAllRecords.length);
+
+            // If modal is open, re-render table
+            const modal = document.getElementById('dataTableModal');
+            if (modal && modal.style.display !== 'none') {
+                currentPage = 1;
+                renderDetailedTable(currentPage);
+            }
+        }
+
+        // Render Active Filter Chips
+        function renderActiveFilterTags(f) {
+            const container = document.getElementById('advActiveTagsContainer');
+            const list = document.getElementById('advActiveTagsList');
+            if (!container || !list) return;
+
+            const tags = [];
+            if (f.keyword) tags.push({ label: `🔎 "${f.keyword}"`, clear: () => clearSearchInput() });
+            if (f.comm !== 'all') tags.push({ label: `🏙️ ชุมชน: ${f.comm}`, clear: () => { document.getElementById('advCommunitySelect').value = 'all'; handleCommunityChange(); } });
+            if (f.lamp !== 'all') tags.push({ label: `💡 ชนิด: ${f.lamp}`, clear: () => { document.getElementById('advLampTypeSelect').value = 'all'; applyAdvancedFilters(); } });
+            if (f.surv !== 'all') tags.push({ label: `👷 ผู้สำรวจ: ${f.surv}`, clear: () => { document.getElementById('advSurveyorSelect').value = 'all'; applyAdvancedFilters(); } });
+            if (f.soi && f.soi !== 'all') tags.push({ label: `🛣️ ซอย/ถนน: ${f.soi}`, clear: () => { document.getElementById('advSoiSelect').value = 'all'; applyAdvancedFilters(); } });
+
+            if (tags.length === 0) {
+                container.style.display = 'none';
+                list.innerHTML = '';
+            } else {
+                container.style.display = 'flex';
+                list.innerHTML = tags.map((t, idx) => `
+                    <span class="adv-tag-chip">
+                        ${escapeHtml(t.label)}
+                        <span class="adv-tag-close" onclick="activeTagClearHandlers[${idx}]()" title="ลบเงื่อนไขนี้">✕</span>
+                    </span>
+                `).join('');
+                window.activeTagClearHandlers = tags.map(t => t.clear);
+            }
+        }
+
+        // Reset all filters back to default
+        function resetAdvancedFilters() {
+            document.getElementById('advSearchInput').value = '';
+            const clearBtn = document.getElementById('advClearSearchBtn');
+            if (clearBtn) clearBtn.style.display = 'none';
+            document.getElementById('advCommunitySelect').value = 'all';
+            document.getElementById('advLampTypeSelect').value = 'all';
+            document.getElementById('advSurveyorSelect').value = 'all';
+            if (document.getElementById('advSoiSelect')) document.getElementById('advSoiSelect').value = 'all';
+
+            // Reset soi dropdown options to all
+            if (globalAllRecords && globalAllRecords.length > 0) {
+                populateSoiOptions(globalAllRecords);
+            }
+
+            applyAdvancedFilters();
+        }
+
+        // Recalculate all metrics and update charts
+        function recalculateAndRenderDashboard(filtered, isFiltered) {
+            // ⚡ หากไม่ได้เลือกตัวกรองใด ๆ (คืนค่าหน้าเดิม) ให้ดึงข้อมูลต้นฉบับกลับมาแสดงทันที
+            // ป้องกันปัญหากราฟ 10 วัน, สัดส่วนชุมชน, และอันดับความหนาแน่นหาย
+            if (!isFiltered && globalOriginalData) {
+                document.getElementById('valTotal').innerText = (globalOriginalData.totalPoints || 0).toLocaleString();
+                document.getElementById('valTotalComm').innerText = globalOriginalData.totalCommunities || 0;
+                document.getElementById('valSurveyors').innerText = globalOriginalData.totalSurveyors || 0;
+                document.getElementById('valAvg').innerText = (globalOriginalData.averagePerDay || 0).toLocaleString();
+                
+                // คืนค่ายอดวันนี้ และเมื่อวาน
+                const todayCount   = globalOriginalData.todayCount || 0;
+                const yestCount    = globalOriginalData.yesterdayCount || 0;
+                const diff         = todayCount - yestCount;
+                document.getElementById('valToday').innerText     = todayCount.toLocaleString();
+                document.getElementById('valYesterday').innerText = yestCount.toLocaleString() + ' จุด';
+                const badge = document.getElementById('valTodayBadge');
+                if (badge) {
+                    if (todayCount === 0) {
+                        badge.innerText = 'ยังไม่มีข้อมูลวันนี้';
+                        badge.style.color      = 'var(--text-muted)';
+                        badge.style.background = 'rgba(148,163,184,0.15)';
+                    } else if (diff > 0) {
+                        badge.innerText = '+' + diff.toLocaleString() + ' จากเมื่อวาน';
+                        badge.style.color      = 'var(--success)';
+                        badge.style.background = 'rgba(16,185,129,0.15)';
+                    } else if (diff < 0) {
+                        badge.innerText = diff.toLocaleString() + ' จากเมื่อวาน';
+                        badge.style.color      = 'var(--danger)';
+                        badge.style.background = 'rgba(239,68,68,0.15)';
+                    } else {
+                        badge.innerText = '= เท่ากันกับเมื่อวาน';
+                        badge.style.color      = 'var(--text-muted)';
+                        badge.style.background = 'rgba(148,163,184,0.15)';
+                    }
+                }
+
+                renderDailyChart(globalOriginalData.dailyStats || []);
+                renderTypeChart(globalOriginalData.lampTypes || []);
+                renderCommunityLampChart(globalCommunityLampStats || [], globalLampTypes || []);
+                renderCommunityList(globalOriginalData.densityByCommunity || [], globalOriginalData.totalPoints || 0);
+                renderSoiList(globalOriginalData.densityBySoi || [], globalOriginalData.totalPoints || 0);
+                renderActivityList(globalOriginalData.recentActivities || []);
+
+                const cabinetCard = document.getElementById('cabinetCard');
+                if (cabinetCard) {
+                    if (globalOriginalData.cabinetTotal > 0) {
+                        cabinetCard.style.display = 'flex';
+                        document.getElementById('cabinetTotal').innerText = globalOriginalData.cabinetTotal.toLocaleString();
+                    } else {
+                        cabinetCard.style.display = 'none';
+                    }
+                }
+                return;
+            }
+
+            const total = filtered.length;
+            document.getElementById('valTotal').innerText = total.toLocaleString();
+
+            const commSet = new Set(filtered.map(r => r.c).filter(Boolean));
+            document.getElementById('valTotalComm').innerText = commSet.size;
+
+            const survSet = new Set(filtered.map(r => r.s).filter(Boolean));
+            document.getElementById('valSurveyors').innerText = survSet.size;
+
+            // คำนวณยอดวันนี้ และเมื่อวาน สำหรับข้อมูลที่กรอง
+            let fToday = 0;
+            let fYest = 0;
+            const now = new Date();
+            const tStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+            const yDate = new Date(now.getTime() - 86400000);
+            const yStr = yDate.getFullYear() + '-' + String(yDate.getMonth() + 1).padStart(2, '0') + '-' + String(yDate.getDate()).padStart(2, '0');
+            filtered.forEach(r => {
+                if (r.d === tStr) fToday++;
+                if (r.d === yStr) fYest++;
+            });
+            document.getElementById('valToday').innerText = fToday.toLocaleString();
+            document.getElementById('valYesterday').innerText = fYest.toLocaleString() + ' จุด';
+            const fBadge = document.getElementById('valTodayBadge');
+            if (fBadge) {
+                fBadge.innerText = `ตรงเงื่อนไข ${total.toLocaleString()} จุด`;
+                fBadge.style.color = 'var(--primary)';
+                fBadge.style.background = 'rgba(56, 189, 248, 0.15)';
+            }
+
+            if (total === 0) {
+                renderTypeChart([]);
+                renderCommunityLampChart([], []);
+                renderCommunityList([], 0);
+                renderSoiList([], 0);
+                renderDailyChart([]);
+                renderActivityList([]);
+                const cabinetCard = document.getElementById('cabinetCard');
+                if (cabinetCard) cabinetCard.style.display = 'none';
+                return;
+            }
+
+            // Recalculate Lamp Types
+            const lampCounts = {};
+            let cabinetCount = 0;
+            filtered.forEach(r => {
+                if (r.lamp && r.lamp.includes('ตู้ควบคุม')) {
+                    cabinetCount++;
+                } else {
+                    const t = r.lamp || 'ไม่ระบุ';
+                    lampCounts[t] = (lampCounts[t] || 0) + 1;
+                }
+            });
+
+            const lampTotal = Object.values(lampCounts).reduce((a, b) => a + b, 0);
+            const newLampTypes = Object.keys(lampCounts).map(k => ({
+                type: k,
+                count: lampCounts[k],
+                percentage: lampTotal > 0 ? ((lampCounts[k] / lampTotal) * 100).toFixed(1) : 0
+            })).sort((a, b) => b.count - a.count);
+
+            renderTypeChart(newLampTypes);
+
+            // Cabinet Card
+            const cabinetCard = document.getElementById('cabinetCard');
+            if (cabinetCard) {
+                if (cabinetCount > 0) {
+                    cabinetCard.style.display = 'flex';
+                    document.getElementById('cabinetTotal').innerText = cabinetCount.toLocaleString();
+                } else {
+                    cabinetCard.style.display = 'none';
+                }
+            }
+
+            // Recalculate Community Lamp Stats for Stacked Chart (ใช้ types ให้ตรงกับ renderCommunityLampChart)
+            const commGroups = {};
+            filtered.forEach(r => {
+                const c = r.c || 'ไม่ระบุ';
+                if (!commGroups[c]) commGroups[c] = { community: c, total: 0, types: {} };
+                commGroups[c].total++;
+                const l = r.lamp || 'ไม่ระบุ';
+                commGroups[c].types[l] = (commGroups[c].types[l] || 0) + 1;
+            });
+            const newCommStats = Object.values(commGroups).sort((a, b) => b.total - a.total);
+            renderCommunityLampChart(newCommStats, newLampTypes);
+
+            // Recalculate Density by Community
+            const newDensityComm = newCommStats.map(s => ({ name: s.community, count: s.total }));
+            renderCommunityList(newDensityComm, total);
+
+            // Recalculate Density by Soi
+            const soiGroups = {};
+            filtered.forEach(r => {
+                const s = r.soi || 'ไม่ระบุ';
+                const c = r.c || '';
+                const key = `${s}|${c}`;
+                if (!soiGroups[key]) soiGroups[key] = { soi: s, community: c, count: 0 };
+                soiGroups[key].count++;
+            });
+            const newDensitySoi = Object.values(soiGroups).sort((a, b) => b.count - a.count);
+            renderSoiList(newDensitySoi, total);
+
+            // Recalculate Daily Stats (last 10 days present in filtered)
+            const dayMap = {};
+            filtered.forEach(r => {
+                if (r.d) {
+                    dayMap[r.d] = (dayMap[r.d] || 0) + 1;
+                }
+            });
+            const sortedDays = Object.keys(dayMap).sort();
+            const recent10Days = sortedDays.slice(-10);
+            const monthsShort = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+            const newDailyStats = recent10Days.map(dStr => {
+                const parts = dStr.split('-');
+                const dayNum = parseInt(parts[2], 10);
+                const monthNum = parseInt(parts[1], 10) - 1;
+                return {
+                    dateLabel: `${dayNum} ${monthsShort[monthNum] || ''}`,
+                    count: dayMap[dStr]
+                };
+            });
+            renderDailyChart(newDailyStats);
+
+            // Recalculate Recent Activities (last 10 records)
+            const months = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+            const newActivities = filtered.slice(-10).reverse().map(r => {
+                let timeDisplay = r.t || '';
+                if (r.d) {
+                    const p = r.d.split('-');
+                    const mIdx = parseInt(p[1], 10) - 1;
+                    timeDisplay = `${parseInt(p[2], 10)} ${months[mIdx] || ''} ${r.t || ''}`;
+                }
+                return {
+                    timeStr: timeDisplay,
+                    surveyor: r.s,
+                    community: r.c,
+                    soi: r.soi,
+                    lampType: r.lamp
+                };
+            });
+            renderActivityList(newActivities);
+        }
+
+        // ==========================================================================
+        // DETAILED DATA TABLE MODAL & PAGINATION
+        // ==========================================================================
+        function openDetailedTableModal() {
+            const modal = document.getElementById('dataTableModal');
+            if (!modal) return;
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+            currentPage = 1;
+            renderDetailedTable(currentPage);
+        }
+
+        function closeDetailedTableModal() {
+            const modal = document.getElementById('dataTableModal');
+            if (modal) modal.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+
+        function changePageSize(val) {
+            pageSize = parseInt(val, 10) || 15;
+            currentPage = 1;
+            renderDetailedTable(currentPage);
+        }
+
+        function goToPage(p) {
+            const total = currentFilteredRecords.length;
+            const totalPages = Math.ceil(total / pageSize) || 1;
+            if (p < 1) p = 1;
+            if (p > totalPages) p = totalPages;
+            currentPage = p;
+            renderDetailedTable(currentPage);
+        }
+
+        function renderDetailedTable(page) {
+            const tbody = document.getElementById('dataTableBody');
+            const total = currentFilteredRecords.length;
+            const totalPages = Math.ceil(total / pageSize) || 1;
+            if (page > totalPages) page = totalPages;
+
+            document.getElementById('modalResultCountBadge').innerText = `${total.toLocaleString()} จุด`;
+
+            const startIdx = (page - 1) * pageSize;
+            const endIdx = Math.min(startIdx + pageSize, total);
+            const pageRecords = currentFilteredRecords.slice(startIdx, endIdx);
+
+            // Update Pagination Controls
+            document.getElementById('paginationInfoText').innerText = 
+                total > 0 ? `แสดงลำดับที่ ${startIdx + 1} - ${endIdx} จากทั้งหมด ${total.toLocaleString()} รายการ` : `ไม่พบรายการข้อมูล`;
+            document.getElementById('currentPageIndicator').innerText = `${page} / ${totalPages}`;
+            document.getElementById('btnPrevPage').disabled = page <= 1;
+            document.getElementById('btnNextPage').disabled = page >= totalPages;
+
+            if (pageRecords.length === 0) {
+                if (!globalAllRecords || globalAllRecords.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="10" style="text-align: center; padding: 2.5rem; color: var(--text-muted);"><div class="spinner" style="margin: 0 auto 1rem; width: 32px; height: 32px;"></div>กำลังเชื่อมต่อฐานข้อมูลรายละเอียด 6,439 จุด...</td></tr>`;
+                    return;
+                }
+                tbody.innerHTML = `<tr><td colspan="10" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">❌ ไม่พบข้อมูลที่ตรงตามเงื่อนไขการค้นหา</td></tr>`;
+                return;
+            }
+
+            const rowsHtml = pageRecords.map((r, idx) => {
+                const rowNo = startIdx + idx + 1;
+                
+                // Lamp badge styling
+                let badgeBg = 'rgba(148, 163, 184, 0.15)';
+                let badgeColor = '#94a3b8';
+                if (r.lamp.includes('LED')) {
+                    badgeBg = 'rgba(16, 185, 129, 0.15)';
+                    badgeColor = 'var(--success)';
+                } else if (r.lamp.includes('ฟลูออเรสเซนต์')) {
+                    badgeBg = 'rgba(56, 189, 248, 0.15)';
+                    badgeColor = 'var(--primary)';
+                } else if (r.lamp.includes('โซเดียม') || r.lamp.includes('แสงจันทร์')) {
+                    badgeBg = 'rgba(245, 158, 11, 0.15)';
+                    badgeColor = 'var(--warning)';
+                } else if (r.lamp.includes('ไฮแมส')) {
+                    badgeBg = 'rgba(167, 139, 250, 0.15)';
+                    badgeColor = '#a78bfa';
+                }
+
+                // GPS button
+                let gpsHtml = '<span style="color:var(--text-muted);">-</span>';
+                if (r.gps && r.gps.trim() !== '') {
+                    const cleanGps = r.gps.replace(/"/g, '').trim();
+                    // หลีกเลี่ยงการเขียน // ติดกันใน script ที่ Apps Script ส่งผ่าน HtmlService
+                    // เพราะบาง deployment อาจตัดข้อความหลัง // จน JavaScript syntax error ได้
+                    const mapsUrl = 'https:' + String.fromCharCode(47, 47)
+                        + 'www.google.com/maps?q=' + encodeURIComponent(cleanGps);
+                    gpsHtml = `<a href="${mapsUrl}" target="_blank" class="btn-table-gps" title="เปิดแผนที่ Google Maps">📍 แผนที่</a>`;
+                }
+
+                // Photo button
+                let picHtml = '<span style="color:var(--text-muted);">-</span>';
+                if (r.pic && r.pic.trim() !== '') {
+                    let fullPicUrl = r.pic;
+                    if (!r.pic.startsWith('http')) {
+                        // สร้าง URL โดยไม่ใช้ // ตรง ๆ เพื่อป้องกัน HtmlService ตัดโค้ดหลัง //
+                        fullPicUrl = 'https:' + String.fromCharCode(47, 47)
+                            + 'lh3.googleusercontent.com/d/' + encodeURIComponent(r.pic);
+                    }
+                    picHtml = `<button type="button" class="btn-table-photo" onclick="openImageLightbox('${escapeJs(fullPicUrl)}', 'โคมไฟ: ${escapeJs(r.id)} (${escapeJs(r.soi)})')">📷 ดูภาพ</button>`;
+                }
+
+                return `
+                    <tr>
+                        <td style="text-align: center; color: var(--text-muted); font-weight: 500;">${rowNo}</td>
+                        <td style="font-weight: 600; color: var(--primary); font-family: monospace;">${escapeHtml(r.id || '-')}</td>
+                        <td style="color: var(--text-muted);">${escapeHtml(r.d || '')} ${escapeHtml(r.t || '')}</td>
+                        <td style="font-weight: 500;">${escapeHtml(r.c || '-')}</td>
+                        <td>${escapeHtml(r.soi || '-')}</td>
+                        <td><span class="badge-lamp-type" style="background:${badgeBg}; color:${badgeColor};">${escapeHtml(r.lamp || '-')}</span></td>
+                        <td style="color: var(--text-muted);">${escapeHtml(r.s || '-')}</td>
+                        <td style="text-align: center;">${gpsHtml}</td>
+                        <td style="text-align: center;">${picHtml}</td>
+                        <td style="color: var(--text-muted); max-width: 180px; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(r.rem || '')}">${escapeHtml(r.rem || '-')}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            tbody.innerHTML = rowsHtml;
+        }
+
+        // Export Filtered Records to CSV (Excel format with UTF-8 BOM)
+        function exportFilteredToCSV() {
+            if (!currentFilteredRecords || currentFilteredRecords.length === 0) {
+                alert("ไม่มีข้อมูลสำหรับส่งออก");
+                return;
+            }
+
+            const headers = ["ลำดับ", "รหัสโคมไฟ", "วันที่", "เวลา", "ชุมชน", "ซอย_ถนน", "ชนิดโคมไฟ", "ผู้สำรวจ", "พิกัด_GPS", "หมายเหตุ"];
+            const rows = currentFilteredRecords.map((r, i) => [
+                i + 1,
+                r.id || '',
+                r.d || '',
+                r.t || '',
+                r.c || '',
+                r.soi || '',
+                r.lamp || '',
+                r.s || '',
+                (r.gps || '').replace(/"/g, ''),
+                (r.rem || '').replace(/"/g, '')
+            ]);
+
+            let csvContent = "\uFEFF"; // UTF-8 BOM for Excel
+            csvContent += headers.map(h => `"${h}"`).join(",") + "\r\n";
+            rows.forEach(row => {
+                csvContent += row.map(v => `"${(v.toString()).replace(/"/g, '""')}"`).join(",") + "\r\n";
+            });
+
+            const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            const now = new Date();
+            const dateStr = now.toISOString().split('T')[0];
+            link.setAttribute("href", url);
+            link.setAttribute("download", `ข้อมูลโคมไฟ_เทศบาลนครระยอง_${dateStr}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        // Lightbox Functions
+        function openImageLightbox(src, caption) {
+            const modal = document.getElementById('imageLightboxModal');
+            const img = document.getElementById('lightboxImage');
+            const cap = document.getElementById('lightboxCaption');
+            if (!modal || !img) return;
+            img.src = src;
+            if (cap) cap.innerText = caption || '';
+            modal.style.display = 'flex';
+        }
+
+        function closeImageLightbox() {
+            const modal = document.getElementById('imageLightboxModal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.toString()
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function escapeJs(str) {
+            if (!str) return '';
+            return str.toString().replace(/'/g, "\\'").replace(/"/g, '\\"');
+        }
+
+        // Fallback synthetic records if old API version is running
+        function generateFallbackRecords(data) {
+            const records = [];
+            if (data.densityBySoi && data.densityBySoi.length > 0) {
+                let idCounter = 1;
+                data.densityBySoi.forEach(s => {
+                    const count = Math.min(s.count, 20);
+                    for (let i = 0; i < count; i++) {
+                        records.push({
+                            id: `LP-${(idCounter++).toString().padStart(5, '0')}`,
+                            d: "2026-06-25",
+                            t: "10:00",
+                            s: "เจ้าหน้าที่สำรวจ",
+                            c: s.community,
+                            soi: s.soi,
+                            lamp: "LED",
+                            gps: "",
+                            pic: "",
+                            rem: ""
+                        });
+                    }
+                });
+            }
+            return records;
+        }
+
+        // Global ESC key listener
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeDetailedTableModal();
+                closeImageLightbox();
+            }
+        });
+    </script>
+
+    <!-- Detailed Data Table Modal -->
+    <div id="dataTableModal" class="adv-modal" style="display: none;">
+        <div class="adv-modal-backdrop" onclick="closeDetailedTableModal()"></div>
+        <div class="adv-modal-content glass">
+            <div class="adv-modal-header">
+                <div class="adv-modal-title">
+                    <h3>📋 รายการข้อมูลโคมไฟที่ค้นพบ</h3>
+                    <span id="modalResultCountBadge" class="modal-count-pill">0 จุด</span>
+                </div>
+                <div class="adv-modal-actions">
+                    <button type="button" class="btn-export-csv" onclick="exportFilteredToCSV()" title="ดาวน์โหลดเป็นไฟล์ CSV (Excel)">
+                        📥 ส่งออก CSV / Excel
+                    </button>
+                    <button type="button" class="btn-modal-close" onclick="closeDetailedTableModal()" title="ปิดหน้าต่าง">✕</button>
+                </div>
+            </div>
+
+            <div class="adv-modal-body">
+                <div class="table-responsive-wrap">
+                    <table class="adv-data-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 55px; text-align: center;">ลำดับ</th>
+                                <th style="width: 100px;">รหัสโคม</th>
+                                <th style="width: 135px;">วันที่/เวลา</th>
+                                <th style="width: 150px;">ชุมชน</th>
+                                <th>ซอย / ถนน</th>
+                                <th style="width: 130px;">ชนิดโคมไฟ</th>
+                                <th style="width: 120px;">ผู้สำรวจ</th>
+                                <th style="width: 90px; text-align: center;">พิกัด GPS</th>
+                                <th style="width: 85px; text-align: center;">รูปภาพ</th>
+                                <th>หมายเหตุ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dataTableBody">
+                            <!-- Populated dynamically via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Modal Footer with Pagination -->
+            <div class="adv-modal-footer">
+                <div class="pagination-info">
+                    <span id="paginationInfoText">กำลังแสดง 0 - 0 จากทั้งหมด 0 รายการ</span>
+                    <select id="pageSizeSelect" class="page-size-select" onchange="changePageSize(this.value)">
+                        <option value="15">แสดง 15 แถว/หน้า</option>
+                        <option value="30">แสดง 30 แถว/หน้า</option>
+                        <option value="50">แสดง 50 แถว/หน้า</option>
+                        <option value="100">แสดง 100 แถว/หน้า</option>
+                    </select>
+                </div>
+                <div class="pagination-controls">
+                    <button type="button" id="btnPrevPage" class="btn-page" onclick="goToPage(currentPage - 1)">◀ ก่อนหน้า</button>
+                    <span id="currentPageIndicator" class="page-indicator">1 / 1</span>
+                    <button type="button" id="btnNextPage" class="btn-page" onclick="goToPage(currentPage + 1)">ถัดไป ▶</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Lightbox Modal for Photo Preview -->
+    <div id="imageLightboxModal" class="image-lightbox-modal" style="display: none;" onclick="closeImageLightbox()">
+        <div class="lightbox-content" onclick="event.stopPropagation()">
+            <button class="lightbox-close-btn" onclick="closeImageLightbox()">✕</button>
+            <img id="lightboxImage" src="" alt="ภาพถ่ายโคมไฟ">
+            <div id="lightboxCaption" class="lightbox-caption"></div>
+        </div>
+    </div>
+</body>
+</html>
