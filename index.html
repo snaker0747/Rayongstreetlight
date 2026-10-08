@@ -1131,6 +1131,272 @@
             text-align: center;
         }
 
+        /* PDF Export Options Dialog Modal */
+        .export-dialog-box {
+            position: relative;
+            width: 94%;
+            max-width: 560px;
+            background: #0f172a;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 16px;
+            padding: 1.5rem;
+            color: #f8fafc;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            z-index: 10006;
+            margin: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1.1rem;
+            animation: modalFadeIn 0.25s ease-out;
+        }
+        [data-theme="light"] .export-dialog-box {
+            background: #ffffff;
+            border-color: #cbd5e1;
+            color: #0f172a;
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.2);
+        }
+        .export-dialog-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 0.75rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 0.85rem;
+        }
+        [data-theme="light"] .export-dialog-header {
+            border-bottom-color: #e2e8f0;
+        }
+        .export-dialog-title {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+        .export-dialog-title h4 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin: 0;
+            color: #38bdf8;
+        }
+        [data-theme="light"] .export-dialog-title h4 {
+            color: #0284c7;
+        }
+        .export-dialog-subtitle {
+            font-size: 0.78rem;
+            color: #94a3b8;
+            margin-top: 0.15rem;
+        }
+        .btn-dialog-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #cbd5e1;
+            font-size: 1.05rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        [data-theme="light"] .btn-dialog-close {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+            color: #475569;
+        }
+        .btn-dialog-close:hover {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border-color: #ef4444;
+        }
+        .export-dialog-summary {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            font-size: 0.82rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+        [data-theme="light"] .export-dialog-summary {
+            background: #f8fafc;
+            border-color: #e2e8f0;
+        }
+        .summary-line {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .summary-count {
+            color: #38bdf8;
+            font-size: 0.95rem;
+        }
+        [data-theme="light"] .summary-count {
+            color: #0284c7;
+        }
+        .summary-filter {
+            color: #cbd5e1;
+            font-size: 0.8rem;
+        }
+        [data-theme="light"] .summary-filter {
+            color: #475569;
+        }
+        .export-options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        .export-option-card {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.85rem;
+            padding: 0.9rem 1rem;
+            border-radius: 12px;
+            border: 1.5px solid rgba(255, 255, 255, 0.1);
+            background: rgba(30, 41, 59, 0.4);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        [data-theme="light"] .export-option-card {
+            border-color: #e2e8f0;
+            background: #f8fafc;
+        }
+        .export-option-card:hover {
+            border-color: #38bdf8;
+            background: rgba(56, 189, 248, 0.08);
+        }
+        .export-option-card.active {
+            border-color: #3b82f6;
+            background: rgba(37, 99, 235, 0.15);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
+        }
+        [data-theme="light"] .export-option-card.active {
+            background: #eff6ff;
+            border-color: #2563eb;
+        }
+        .export-radio {
+            margin-top: 0.25rem;
+            cursor: pointer;
+            accent-color: #2563eb;
+        }
+        .option-card-body {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+        .option-card-top {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .option-icon {
+            font-size: 1.1rem;
+        }
+        .option-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #f1f5f9;
+        }
+        [data-theme="light"] .option-title {
+            color: #0f172a;
+        }
+        .option-badge {
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 9999px;
+        }
+        .badge-photo {
+            background: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+            border: 1px solid rgba(52, 211, 153, 0.3);
+        }
+        .badge-text {
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+            border: 1px solid rgba(96, 165, 250, 0.3);
+        }
+        .option-desc {
+            font-size: 0.78rem;
+            color: #94a3b8;
+            line-height: 1.35;
+            margin: 0;
+        }
+        [data-theme="light"] .option-desc {
+            color: #64748b;
+        }
+        .option-specs {
+            display: flex;
+            gap: 0.75rem;
+            font-size: 0.73rem;
+            color: #64748b;
+            flex-wrap: wrap;
+        }
+        [data-theme="light"] .option-specs {
+            color: #94a3b8;
+        }
+        .export-dialog-notice {
+            background: rgba(245, 158, 11, 0.15);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            color: #fcd34d;
+            border-radius: 8px;
+            padding: 0.6rem 0.85rem;
+            font-size: 0.78rem;
+            line-height: 1.4;
+        }
+        .export-dialog-footer {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 0.6rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        [data-theme="light"] .export-dialog-footer {
+            border-top-color: #e2e8f0;
+        }
+        .btn-dialog-cancel {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #94a3b8;
+            padding: 0.45rem 1rem;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        [data-theme="light"] .btn-dialog-cancel {
+            border-color: #cbd5e1;
+            color: #64748b;
+        }
+        .btn-dialog-cancel:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #f1f5f9;
+        }
+        .btn-dialog-confirm {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            border: 1px solid #3b82f6;
+            color: white;
+            padding: 0.48rem 1.25rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.35);
+            transition: all 0.2s;
+        }
+        .btn-dialog-confirm:hover {
+            background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 14px rgba(37, 99, 235, 0.45);
+        }
+
         @media (max-width: 1024px) {
             .adv-filter-grid {
                 grid-template-columns: 1fr 1fr;
@@ -2998,12 +3264,10 @@
                 // Photo button
                 let picHtml = '<span style="color:var(--text-muted);">-</span>';
                 if (r.pic && r.pic.trim() !== '') {
-                    let fullPicUrl = r.pic;
-                    if (!r.pic.startsWith('http')) {
-                        fullPicUrl = 'https:' + String.fromCharCode(47, 47)
-                            + 'lh3.googleusercontent.com/d/' + encodeURIComponent(r.pic);
+                    const fullPicUrl = resolveReportPhotoUrl(r.pic);
+                    if (fullPicUrl) {
+                        picHtml = `<button type="button" class="btn-table-photo" onclick="openImageLightbox('${escapeJs(fullPicUrl)}', 'โคมไฟ: ${escapeJs(r.id)} (${escapeJs(r.soi)})')">📷 ดูภาพ</button>`;
                     }
-                    picHtml = `<button type="button" class="btn-table-photo" onclick="openImageLightbox('${escapeJs(fullPicUrl)}', 'โคมไฟ: ${escapeJs(r.id)} (${escapeJs(r.soi)})')">📷 ดูภาพ</button>`;
                 }
 
                 const surveyorClean = (r.s || '-').split('@')[0];
@@ -3073,8 +3337,107 @@
             URL.revokeObjectURL(url);
         }
 
+        // Resolve Photo URL from AppSheet or Google Drive
+        function resolveReportPhotoUrl(pic) {
+            if (!pic || !pic.trim()) return '';
+            const clean = pic.trim();
+            if (clean.startsWith('http://') || clean.startsWith('https://')) {
+                return clean;
+            }
+            // AppSheet relative image path (e.g. contains '/' or ends with image extensions)
+            if (clean.includes('/') || clean.toLowerCase().endsWith('.jpg') || clean.toLowerCase().endsWith('.png') || clean.toLowerCase().endsWith('.jpeg')) {
+                const appName = encodeURIComponent('ข้อมูลไฟฟ้าแสงสว่าง-724677635');
+                const tableName = encodeURIComponent('โคมไฟ');
+                const fileName = encodeURIComponent(clean);
+                return `https://www.appsheet.com/template/gettablefileurl?appName=${appName}&tableName=${tableName}&fileName=${fileName}`;
+            }
+            // Google Drive file ID
+            return 'https://lh3.googleusercontent.com/d/' + encodeURIComponent(clean);
+        }
+
+        // PDF Export Options Dialog Modal Functions
+        function openPdfExportDialog() {
+            const records = getActiveModalRecords();
+            if (!records || records.length === 0) {
+                alert("ไม่มีข้อมูลสำหรับส่งออกเป็น PDF");
+                return;
+            }
+
+            // Update Dialog UI
+            const countEl = document.getElementById('exportDialogRecordCount');
+            if (countEl) countEl.innerText = `${records.length.toLocaleString()} จุด`;
+
+            // Filter description
+            const commVal = document.getElementById('advCommunitySelect') ? document.getElementById('advCommunitySelect').value : 'all';
+            const lampVal = document.getElementById('advLampTypeSelect') ? document.getElementById('advLampTypeSelect').value : 'all';
+            const survVal = document.getElementById('advSurveyorSelect') ? document.getElementById('advSurveyorSelect').value : 'all';
+            const soiVal = document.getElementById('advSoiSelect') ? document.getElementById('advSoiSelect').value : 'all';
+            const keywordVal = document.getElementById('advSearchInput') ? document.getElementById('advSearchInput').value.trim() : '';
+
+            const filterItems = [];
+            if (commVal !== 'all') filterItems.push(`ชุมชน: ${commVal}`);
+            if (soiVal !== 'all') filterItems.push(`ซอย/ถนน: ${soiVal}`);
+            if (lampVal !== 'all') filterItems.push(`ชนิดโคม: ${lampVal}`);
+            if (survVal !== 'all') filterItems.push(`ผู้สำรวจ: ${survVal.split('@')[0]}`);
+            if (keywordVal) filterItems.push(`คำค้น: "${keywordVal}"`);
+            if (modalQuickSearchTerm) filterItems.push(`ในตาราง: "${modalQuickSearchTerm}"`);
+
+            const descEl = document.getElementById('exportDialogFilterDesc');
+            if (descEl) {
+                descEl.innerText = filterItems.length > 0 ? filterItems.join(' | ') : 'ข้อมูลทั้งหมด (ไม่จำกัดเงื่อนไข)';
+            }
+
+            // Warning and default selection based on record count
+            const noticeEl = document.getElementById('exportDialogNotice');
+            if (noticeEl) {
+                if (records.length > 250) {
+                    noticeEl.style.display = 'block';
+                    noticeEl.innerHTML = `⚠️ รายการข้อมูลมีจำนวนมาก (${records.length.toLocaleString()} จุด) หากเลือก 'รวมภาพถ่าย' อาจใช้เวลาโหลดภาพสักครู่ แนะนำ 'รายงานเฉพาะตารางข้อมูล' เพื่อความรวดเร็ว`;
+                    if (records.length > 500) {
+                        selectExportOption('text');
+                    } else {
+                        selectExportOption('photos');
+                    }
+                } else {
+                    noticeEl.style.display = 'none';
+                    selectExportOption('photos');
+                }
+            }
+
+            const modal = document.getElementById('pdfExportDialogModal');
+            if (modal) modal.style.display = 'flex';
+        }
+
+        function closePdfExportDialog() {
+            const modal = document.getElementById('pdfExportDialogModal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        function selectExportOption(type) {
+            const radioPhotos = document.querySelector('input[name="pdfExportChoice"][value="photos"]');
+            const radioText = document.querySelector('input[name="pdfExportChoice"][value="text"]');
+            const cardPhotos = document.getElementById('cardOptPhotos');
+            const cardText = document.getElementById('cardOptText');
+            if (type === 'photos') {
+                if (radioPhotos) radioPhotos.checked = true;
+                if (cardPhotos) cardPhotos.classList.add('active');
+                if (cardText) cardText.classList.remove('active');
+            } else {
+                if (radioText) radioText.checked = true;
+                if (cardText) cardText.classList.add('active');
+                if (cardPhotos) cardPhotos.classList.remove('active');
+            }
+        }
+
+        function confirmAndGeneratePDF() {
+            const radioPhotos = document.querySelector('input[name="pdfExportChoice"]:checked');
+            const includePhotos = radioPhotos ? (radioPhotos.value === 'photos') : true;
+            closePdfExportDialog();
+            exportFilteredToPDF(includePhotos);
+        }
+
         // Export Filtered Records to Official Printable PDF Document
-        function exportFilteredToPDF() {
+        function exportFilteredToPDF(includePhotos = true) {
             const records = getActiveModalRecords();
             if (!records || records.length === 0) {
                 alert("ไม่มีข้อมูลสำหรับส่งออกเป็น PDF");
@@ -3084,7 +3447,7 @@
             if (records.length > 500) {
                 const proceed = confirm(
                     `⚠️ รายการข้อมูลมีจำนวนมาก (${records.length.toLocaleString()} จุด)\n` +
-                    `การสร้างเอกสาร PDF ขนาดใหญ่ (~${Math.ceil(records.length / 28)} หน้า) อาจใช้เวลาเรนเดอร์หลายวินาที\n\n` +
+                    `การสร้างเอกสาร PDF ขนาดใหญ่ (~${Math.ceil(records.length / (includePhotos ? 13 : 25))} หน้า) อาจใช้เวลาเรนเดอร์หลายวินาที\n\n` +
                     `💡 คำแนะนำ: กรองเลือกเฉพาะ 'ชุมชน' หรือ 'ซอย/ถนน' ก่อนสั่งพิมพ์\n` +
                     `หรือใช้ปุ่ม '📥 ส่งออก CSV / Excel' เพื่อนำไปเปิดใน Excel ได้ทันทีโดยไม่ต้องรอ\n\n` +
                     `คุณต้องการยืนยันสร้างเอกสาร PDF ทั้งหมดต่อไปหรือไม่?`
@@ -3147,6 +3510,16 @@
                 else if (r.lamp.includes('โซเดียม') || r.lamp.includes('แสงจันทร์')) lampClass = 'lamp-sodium';
                 else if (r.lamp.includes('ไฮแมส')) lampClass = 'lamp-highmast';
 
+                let photoCell = '';
+                if (includePhotos) {
+                    const photoUrl = resolveReportPhotoUrl(r.pic);
+                    let photoHtml = '<span class="no-photo-badge">- ไม่มีภาพ -</span>';
+                    if (photoUrl) {
+                        photoHtml = `<img src="${photoUrl}" class="lamp-thumb" alt="โคมไฟ ${escapeHtml(r.id)}" onerror="this.onerror=null; this.parentElement.innerHTML='<span class=\\'no-photo-badge\\'>-</span>';" loading="lazy">`;
+                    }
+                    photoCell = `<td class="text-center">${photoHtml}</td>`;
+                }
+
                 return `
                     <tr>
                         <td class="text-center font-num">${idx + 1}</td>
@@ -3158,6 +3531,7 @@
                         <td class="text-center" style="white-space: nowrap;">${gpsDisplay}</td>
                         <td>${escapeHtml(surveyor)}</td>
                         <td>${escapeHtml(r.rem || '-')}</td>
+                        ${photoCell}
                     </tr>
                 `;
             }).join('');
@@ -3373,6 +3747,22 @@
             font-family: monospace;
             font-size: 9.5px;
         }
+        .lamp-thumb {
+            width: 54px;
+            height: 42px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 1px solid #cbd5e1;
+            display: inline-block;
+            vertical-align: middle;
+            background-color: #f1f5f9;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+        }
+        .no-photo-badge {
+            color: #94a3b8;
+            font-size: 9.5px;
+            white-space: nowrap;
+        }
         .report-footer-note {
             margin-top: 15px;
             text-align: right;
@@ -3385,7 +3775,8 @@
     <div class="no-print-bar">
         <div>
             <strong>📄 รายงานผลการสำรวจโคมไฟสาธารณะ เทศบาลนครระยอง</strong>
-            <span style="opacity: 0.8; margin-left: 10px;">(กดปุ่ม 'สั่งพิมพ์ / บันทึก PDF' ด้านขวา เพื่อบันทึกเป็น PDF หรือส่งออกเครื่องพิมพ์)</span>
+            <span style="opacity: 0.85; margin-left: 10px;" id="printStatusText">${includePhotos ? '(กำลังตรวจสอบรูปภาพ...)' : '(พร้อมสั่งพิมพ์)'}</span>
+            <span style="opacity: 0.7; margin-left: 8px;">| ${includePhotos ? '📷 รูปแบบ: รวมภาพถ่าย' : '📄 รูปแบบ: เฉพาะตาราง'}</span>
         </div>
         <div style="display: flex; gap: 8px;">
             <button type="button" class="btn-print" onclick="window.print()">🖨️ สั่งพิมพ์ / บันทึก PDF</button>
@@ -3423,15 +3814,16 @@
         <table class="report-table">
             <thead>
                 <tr>
-                    <th style="width: 40px; text-align: center;">ลำดับ</th>
-                    <th style="width: 85px; text-align: center;">รหัสโคม</th>
-                    <th style="width: 110px; text-align: center;">วัน/เวลาสำรวจ</th>
-                    <th style="width: 130px;">ชุมชน</th>
+                    <th style="width: 38px; text-align: center;">ลำดับ</th>
+                    <th style="width: 80px; text-align: center;">รหัสโคม</th>
+                    <th style="width: 105px; text-align: center;">วัน/เวลาสำรวจ</th>
+                    <th style="width: 125px;">ชุมชน</th>
                     <th>ซอย / ถนน</th>
-                    <th style="width: 105px; text-align: center;">ชนิดโคมไฟ</th>
-                    <th style="width: 125px; text-align: center;">พิกัด GPS</th>
-                    <th style="width: 100px;">ผู้สำรวจ</th>
-                    <th style="width: 110px;">หมายเหตุ</th>
+                    <th style="width: 100px; text-align: center;">ชนิดโคมไฟ</th>
+                    <th style="width: 115px; text-align: center;">พิกัด GPS</th>
+                    <th style="width: 95px;">ผู้สำรวจ</th>
+                    <th style="width: 105px;">หมายเหตุ</th>
+                    ${includePhotos ? '<th style="width: 75px; text-align: center;">ภาพถ่ายโคมไฟ</th>' : ''}
                 </tr>
             </thead>
             <tbody>
@@ -3445,9 +3837,45 @@
     </div>
 
     <scr` + `ipt>
-        setTimeout(function() {
-            try { window.focus(); window.print(); } catch(e) {}
-        }, 250);
+        (function() {
+            var isPrinted = false;
+            function doPrint() {
+                if (isPrinted) return;
+                isPrinted = true;
+                var st = document.getElementById('printStatusText');
+                if (st) st.textContent = '(พร้อมสั่งพิมพ์)';
+                setTimeout(function() {
+                    try { window.focus(); window.print(); } catch(e) {}
+                }, 250);
+            }
+
+            ${includePhotos ? `
+            var imgs = document.querySelectorAll('img.lamp-thumb');
+            var total = imgs.length;
+            if (total === 0) {
+                doPrint();
+            } else {
+                var loaded = 0;
+                var st = document.getElementById('printStatusText');
+                function onDone() {
+                    loaded++;
+                    if (st) st.textContent = '(กำลังโหลดรูปภาพ ' + loaded + '/' + total + ' รูป)...';
+                    if (loaded >= total) doPrint();
+                }
+                imgs.forEach(function(img) {
+                    if (img.complete) {
+                        onDone();
+                    } else {
+                        img.addEventListener('load', onDone);
+                        img.addEventListener('error', onDone);
+                    }
+                });
+                setTimeout(doPrint, 3000);
+            }
+            ` : `
+            setTimeout(doPrint, 250);
+            `}
+        })();
     </scr` + `ipt>
 </body>
 </html>`;
@@ -3461,13 +3889,13 @@
             printWindow.document.write(reportHtml);
             printWindow.document.close();
 
-            // Direct trigger from opener window as well
+            // Direct trigger from opener window as fallback
             setTimeout(() => {
                 try {
                     printWindow.focus();
-                    printWindow.print();
+                    if (!includePhotos) printWindow.print();
                 } catch(e) {}
-            }, 350);
+            }, 500);
         }
 
         // Lightbox Functions
@@ -3530,6 +3958,7 @@
         // Global ESC key listener
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
+                closePdfExportDialog();
                 closeDetailedTableModal();
                 closeImageLightbox();
             }
@@ -3546,7 +3975,7 @@
                     <span id="modalResultCountBadge" class="modal-count-pill">0 จุด</span>
                 </div>
                 <div class="adv-modal-actions">
-                    <button type="button" class="btn-export-pdf" onclick="exportFilteredToPDF()" title="พิมพ์หรือส่งออกเป็นรายงาน PDF ทางราชการ">
+                    <button type="button" class="btn-export-pdf" onclick="openPdfExportDialog()" title="เลือกรูปแบบและส่งออกรายงาน PDF / พิมพ์">
                         📄 ส่งออก PDF / พิมพ์
                     </button>
                     <button type="button" class="btn-export-csv" onclick="exportFilteredToCSV()" title="ดาวน์โหลดเป็นไฟล์ CSV (Excel)">
@@ -3611,6 +4040,79 @@
                     <span id="currentPageIndicator" class="page-indicator">1 / 1</span>
                     <button type="button" id="btnNextPage" class="btn-page" onclick="goToPage(currentPage + 1)">ถัดไป ▶</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export PDF Options Dialog Modal -->
+    <div id="pdfExportDialogModal" class="adv-modal" style="display: none; z-index: 10005;">
+        <div class="adv-modal-backdrop" onclick="closePdfExportDialog()"></div>
+        <div class="export-dialog-box glass">
+            <div class="export-dialog-header">
+                <div class="export-dialog-title">
+                    <span style="font-size: 1.25rem;">📄</span>
+                    <div>
+                        <h4>ส่งออกรายงานผลการสำรวจ (PDF / พิมพ์)</h4>
+                        <p class="export-dialog-subtitle">เลือกรูปแบบเอกสารที่ต้องการจัดพิมพ์หรือบันทึกเป็น PDF</p>
+                    </div>
+                </div>
+                <button type="button" class="btn-dialog-close" onclick="closePdfExportDialog()" title="ปิดหน้าต่าง">✕</button>
+            </div>
+
+            <div class="export-dialog-summary">
+                <div class="summary-line">
+                    <span class="summary-label">📊 จำนวนรายการที่เลือก:</span>
+                    <strong id="exportDialogRecordCount" class="summary-count">0 จุด</strong>
+                </div>
+                <div class="summary-line filter-desc-line">
+                    <span class="summary-label">🎯 เงื่อนไข:</span>
+                    <span id="exportDialogFilterDesc" class="summary-filter">-</span>
+                </div>
+            </div>
+
+            <div class="export-options-container">
+                <label class="export-option-card active" id="cardOptPhotos" onclick="selectExportOption('photos')">
+                    <input type="radio" name="pdfExportChoice" value="photos" checked class="export-radio">
+                    <div class="option-card-body">
+                        <div class="option-card-top">
+                            <span class="option-icon">📷</span>
+                            <span class="option-title">รวมภาพถ่ายโคมไฟ (10 คอลัมน์)</span>
+                            <span class="option-badge badge-photo">⭐ แนะนำสำหรับตรวจงาน</span>
+                        </div>
+                        <p class="option-desc">แสดงรูปภาพถ่ายจริงขนาดกะทัดรัด (Thumbnail 54x42px) ในช่องท้ายสุด เหมาะสำหรับตรวจสอบสภาพโคมไฟจริงภาคสนาม และตรวจรับงานซ่อมบำรุง</p>
+                        <div class="option-specs">
+                            <span>📐 ประมาณ 12 - 14 แถว / หน้า (A4 แนวนอน)</span>
+                            <span>⏳ ระบบจะรอภาพโหลดครบก่อนสั่งพิมพ์</span>
+                        </div>
+                    </div>
+                </label>
+
+                <label class="export-option-card" id="cardOptText" onclick="selectExportOption('text')">
+                    <input type="radio" name="pdfExportChoice" value="text" class="export-radio">
+                    <div class="option-card-body">
+                        <div class="option-card-top">
+                            <span class="option-icon">📄</span>
+                            <span class="option-title">รายงานเฉพาะตารางข้อมูล (9 คอลัมน์ - ไม่รวมรูป)</span>
+                            <span class="option-badge badge-text">⚡ โหลดเร็วพิเศษ</span>
+                        </div>
+                        <p class="option-desc">ตารางข้อความล้วนมาตรฐาน โหลดเร็วทันที ประหยัดกระดาษ เหมาะสำหรับรายงานสรุปสถิติ รายงานผู้บริหาร หรือกรณีมีข้อมูลหลายร้อยจุด</p>
+                        <div class="option-specs">
+                            <span>📐 ประมาณ 22 - 25 แถว / หน้า (A4 แนวนอน)</span>
+                            <span>⚡ สั่งพิมพ์ได้ทันที</span>
+                        </div>
+                    </div>
+                </label>
+            </div>
+
+            <div id="exportDialogNotice" class="export-dialog-notice" style="display: none;">
+                ⚠️ รายการข้อมูลมีจำนวนมาก การสร้างรายงานพร้อมรูปภาพอาจใช้เวลาโหลดภาพสักครู่
+            </div>
+
+            <div class="export-dialog-footer">
+                <button type="button" class="btn-dialog-cancel" onclick="closePdfExportDialog()">ยกเลิก</button>
+                <button type="button" class="btn-dialog-confirm" onclick="confirmAndGeneratePDF()">
+                    🖨️ สร้างเอกสาร / สั่งพิมพ์
+                </button>
             </div>
         </div>
     </div>
