@@ -1135,18 +1135,18 @@
         .export-dialog-box {
             position: relative;
             width: 94%;
-            max-width: 560px;
+            max-width: 480px;
             background: #0f172a;
             border: 1px solid rgba(255, 255, 255, 0.15);
             border-radius: 16px;
-            padding: 1.5rem;
+            padding: 1.25rem 1.4rem;
             color: #f8fafc;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
             z-index: 10006;
             margin: auto;
             display: flex;
             flex-direction: column;
-            gap: 1.1rem;
+            gap: 0.9rem;
             animation: modalFadeIn 0.25s ease-out;
         }
         [data-theme="light"] .export-dialog-box {
@@ -1157,11 +1157,11 @@
         }
         .export-dialog-header {
             display: flex;
-            align-items: flex-start;
+            align-items: center;
             justify-content: space-between;
             gap: 0.75rem;
             border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-            padding-bottom: 0.85rem;
+            padding-bottom: 0.75rem;
         }
         [data-theme="light"] .export-dialog-header {
             border-bottom-color: #e2e8f0;
@@ -1180,19 +1180,14 @@
         [data-theme="light"] .export-dialog-title h4 {
             color: #0284c7;
         }
-        .export-dialog-subtitle {
-            font-size: 0.78rem;
-            color: #94a3b8;
-            margin-top: 0.15rem;
-        }
         .btn-dialog-close {
-            width: 32px;
-            height: 32px;
+            width: 30px;
+            height: 30px;
             border-radius: 8px;
             background: rgba(255, 255, 255, 0.08);
             border: 1px solid rgba(255, 255, 255, 0.1);
             color: #cbd5e1;
-            font-size: 1.05rem;
+            font-size: 1rem;
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -1213,11 +1208,11 @@
             background: rgba(30, 41, 59, 0.6);
             border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 10px;
-            padding: 0.75rem 1rem;
+            padding: 0.65rem 0.9rem;
             font-size: 0.82rem;
             display: flex;
             flex-direction: column;
-            gap: 0.35rem;
+            gap: 0.3rem;
         }
         [data-theme="light"] .export-dialog-summary {
             background: #f8fafc;
@@ -1246,14 +1241,14 @@
         .export-options-container {
             display: flex;
             flex-direction: column;
-            gap: 0.75rem;
+            gap: 0.6rem;
         }
         .export-option-card {
             display: flex;
-            align-items: flex-start;
-            gap: 0.85rem;
-            padding: 0.9rem 1rem;
-            border-radius: 12px;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
             border: 1.5px solid rgba(255, 255, 255, 0.1);
             background: rgba(30, 41, 59, 0.4);
             cursor: pointer;
@@ -1270,36 +1265,29 @@
         .export-option-card.active {
             border-color: #3b82f6;
             background: rgba(37, 99, 235, 0.15);
-            box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
+            box-shadow: 0 0 12px rgba(59, 130, 246, 0.2);
         }
         [data-theme="light"] .export-option-card.active {
             background: #eff6ff;
             border-color: #2563eb;
         }
         .export-radio {
-            margin-top: 0.25rem;
+            margin: 0;
             cursor: pointer;
             accent-color: #2563eb;
-        }
-        .option-card-body {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 0.35rem;
-        }
-        .option-card-top {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            flex-wrap: wrap;
+            transform: scale(1.1);
         }
         .option-icon {
-            font-size: 1.1rem;
+            font-size: 1.15rem;
         }
         .option-title {
             font-weight: 600;
             font-size: 0.9rem;
             color: #f1f5f9;
+            flex: 1;
+        }
+        [data-theme="light"] .option-title {
+            color: #0f172a;
         }
         [data-theme="light"] .option-title {
             color: #0f172a;
@@ -3387,22 +3375,10 @@
                 descEl.innerText = filterItems.length > 0 ? filterItems.join(' | ') : 'ข้อมูลทั้งหมด (ไม่จำกัดเงื่อนไข)';
             }
 
-            // Warning and default selection based on record count
+            // Default selection
+            selectExportOption('photos');
             const noticeEl = document.getElementById('exportDialogNotice');
-            if (noticeEl) {
-                if (records.length > 250) {
-                    noticeEl.style.display = 'block';
-                    noticeEl.innerHTML = `⚠️ รายการข้อมูลมีจำนวนมาก (${records.length.toLocaleString()} จุด) หากเลือก 'รวมภาพถ่าย' อาจใช้เวลาโหลดภาพสักครู่ แนะนำ 'รายงานเฉพาะตารางข้อมูล' เพื่อความรวดเร็ว`;
-                    if (records.length > 500) {
-                        selectExportOption('text');
-                    } else {
-                        selectExportOption('photos');
-                    }
-                } else {
-                    noticeEl.style.display = 'none';
-                    selectExportOption('photos');
-                }
-            }
+            if (noticeEl) noticeEl.style.display = 'none';
 
             const modal = document.getElementById('pdfExportDialogModal');
             if (modal) modal.style.display = 'flex';
@@ -4051,10 +4027,7 @@
             <div class="export-dialog-header">
                 <div class="export-dialog-title">
                     <span style="font-size: 1.25rem;">📄</span>
-                    <div>
-                        <h4>ส่งออกรายงานผลการสำรวจ (PDF / พิมพ์)</h4>
-                        <p class="export-dialog-subtitle">เลือกรูปแบบเอกสารที่ต้องการจัดพิมพ์หรือบันทึกเป็น PDF</p>
-                    </div>
+                    <h4>ส่งออกรายงานผลการสำรวจ (PDF / พิมพ์)</h4>
                 </div>
                 <button type="button" class="btn-dialog-close" onclick="closePdfExportDialog()" title="ปิดหน้าต่าง">✕</button>
             </div>
@@ -4073,40 +4046,18 @@
             <div class="export-options-container">
                 <label class="export-option-card active" id="cardOptPhotos" onclick="selectExportOption('photos')">
                     <input type="radio" name="pdfExportChoice" value="photos" checked class="export-radio">
-                    <div class="option-card-body">
-                        <div class="option-card-top">
-                            <span class="option-icon">📷</span>
-                            <span class="option-title">รวมภาพถ่ายโคมไฟ (10 คอลัมน์)</span>
-                            <span class="option-badge badge-photo">⭐ แนะนำสำหรับตรวจงาน</span>
-                        </div>
-                        <p class="option-desc">แสดงรูปภาพถ่ายจริงขนาดกะทัดรัด (Thumbnail 54x42px) ในช่องท้ายสุด เหมาะสำหรับตรวจสอบสภาพโคมไฟจริงภาคสนาม และตรวจรับงานซ่อมบำรุง</p>
-                        <div class="option-specs">
-                            <span>📐 ประมาณ 12 - 14 แถว / หน้า (A4 แนวนอน)</span>
-                            <span>⏳ ระบบจะรอภาพโหลดครบก่อนสั่งพิมพ์</span>
-                        </div>
-                    </div>
+                    <span class="option-icon">📷</span>
+                    <span class="option-title">รวมภาพถ่ายโคมไฟ (10 คอลัมน์)</span>
                 </label>
 
                 <label class="export-option-card" id="cardOptText" onclick="selectExportOption('text')">
                     <input type="radio" name="pdfExportChoice" value="text" class="export-radio">
-                    <div class="option-card-body">
-                        <div class="option-card-top">
-                            <span class="option-icon">📄</span>
-                            <span class="option-title">รายงานเฉพาะตารางข้อมูล (9 คอลัมน์ - ไม่รวมรูป)</span>
-                            <span class="option-badge badge-text">⚡ โหลดเร็วพิเศษ</span>
-                        </div>
-                        <p class="option-desc">ตารางข้อความล้วนมาตรฐาน โหลดเร็วทันที ประหยัดกระดาษ เหมาะสำหรับรายงานสรุปสถิติ รายงานผู้บริหาร หรือกรณีมีข้อมูลหลายร้อยจุด</p>
-                        <div class="option-specs">
-                            <span>📐 ประมาณ 22 - 25 แถว / หน้า (A4 แนวนอน)</span>
-                            <span>⚡ สั่งพิมพ์ได้ทันที</span>
-                        </div>
-                    </div>
+                    <span class="option-icon">📄</span>
+                    <span class="option-title">เฉพาะตารางข้อมูล (9 คอลัมน์ - ไม่รวมรูป)</span>
                 </label>
             </div>
 
-            <div id="exportDialogNotice" class="export-dialog-notice" style="display: none;">
-                ⚠️ รายการข้อมูลมีจำนวนมาก การสร้างรายงานพร้อมรูปภาพอาจใช้เวลาโหลดภาพสักครู่
-            </div>
+            <div id="exportDialogNotice" class="export-dialog-notice" style="display: none;"></div>
 
             <div class="export-dialog-footer">
                 <button type="button" class="btn-dialog-cancel" onclick="closePdfExportDialog()">ยกเลิก</button>
