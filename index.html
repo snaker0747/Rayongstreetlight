@@ -674,7 +674,8 @@
             position: relative;
             z-index: 2;
             width: 100%;
-            max-width: 1200px;
+            max-width: 1350px;
+            height: 90vh;
             max-height: 90vh;
             display: flex;
             flex-direction: column;
@@ -691,9 +692,10 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding-bottom: 1rem;
+            padding-bottom: 0.75rem;
             border-bottom: 1px solid var(--card-border);
             gap: 1rem;
+            flex-wrap: wrap;
         }
         .adv-modal-title {
             display: flex;
@@ -702,27 +704,53 @@
         }
         .adv-modal-title h3 {
             margin: 0;
-            font-size: 1.2rem;
+            font-size: 1.25rem;
             font-weight: 600;
         }
         .modal-count-pill {
             background: rgba(16, 185, 129, 0.15);
             color: var(--success);
-            padding: 0.2rem 0.6rem;
+            padding: 0.25rem 0.75rem;
             border-radius: 12px;
             font-size: 0.85rem;
             font-weight: 600;
+            border: 1px solid rgba(16, 185, 129, 0.3);
         }
         .adv-modal-actions {
             display: flex;
             align-items: center;
             gap: 0.6rem;
+            flex-wrap: wrap;
+        }
+        .btn-export-pdf {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            border: 1px solid #3b82f6;
+            color: #ffffff;
+            padding: 0.45rem 0.95rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
+            transition: all 0.2s ease;
+        }
+        .btn-export-pdf:hover {
+            background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.4);
         }
         .btn-export-csv {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
             background: rgba(16, 185, 129, 0.15);
             border: 1px solid rgba(16, 185, 129, 0.4);
             color: var(--success);
-            padding: 0.4rem 0.8rem;
+            padding: 0.45rem 0.95rem;
             border-radius: 8px;
             font-size: 0.85rem;
             font-weight: 600;
@@ -733,10 +761,11 @@
         .btn-export-csv:hover {
             background: var(--success);
             color: white;
+            transform: translateY(-1px);
         }
         .btn-modal-close {
-            width: 32px;
-            height: 32px;
+            width: 34px;
+            height: 34px;
             border-radius: 8px;
             background: rgba(255, 255, 255, 0.08);
             border: 1px solid var(--card-border);
@@ -753,52 +782,216 @@
             color: var(--danger);
             border-color: var(--danger);
         }
+        /* Modal Toolbar (Filter summary, stats & in-modal search) */
+        .adv-modal-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        [data-theme="light"] .adv-modal-toolbar {
+            border-bottom-color: #e2e8f0;
+        }
+        .modal-filter-info {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            flex: 1;
+            min-width: 240px;
+        }
+        .modal-filter-info strong {
+            color: var(--primary);
+        }
+        .modal-stats-chips {
+            display: flex;
+            gap: 0.4rem;
+            flex-wrap: wrap;
+        }
+        .pill-stat-mini {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.2rem 0.55rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .pill-stat-mini.led { color: var(--success); border: 1px solid rgba(16, 185, 129, 0.3); background: rgba(16, 185, 129, 0.1); }
+        .pill-stat-mini.fluo { color: var(--primary); border: 1px solid rgba(56, 189, 248, 0.3); background: rgba(56, 189, 248, 0.1); }
+        .pill-stat-mini.sodium { color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.3); background: rgba(245, 158, 11, 0.1); }
+        .pill-stat-mini.other { color: #a78bfa; border: 1px solid rgba(167, 139, 250, 0.3); background: rgba(167, 139, 250, 0.1); }
+        .modal-search-box {
+            position: relative;
+            display: flex;
+            align-items: center;
+            min-width: 240px;
+        }
+        .modal-search-input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 0.4rem 2rem 0.4rem 0.75rem;
+            color: var(--text-main);
+            font-size: 0.82rem;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .modal-search-input:focus {
+            border-color: var(--primary);
+        }
+        [data-theme="light"] .modal-search-input {
+            background: #ffffff;
+            border-color: #cbd5e1;
+        }
+        .btn-clear-modal-search {
+            position: absolute;
+            right: 8px;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.85rem;
+            padding: 0 4px;
+        }
+        .btn-clear-modal-search:hover {
+            color: var(--danger);
+        }
         .adv-modal-body {
             flex: 1;
-            overflow-y: auto;
-            margin: 1rem 0;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            margin: 0.75rem 0;
             border: 1px solid var(--card-border);
             border-radius: 10px;
-            background: rgba(0, 0, 0, 0.15);
+            background: rgba(0, 0, 0, 0.2);
+            overflow: hidden;
         }
         .table-responsive-wrap {
-            overflow-x: auto;
+            overflow: auto;
             width: 100%;
+            height: 100%;
+            flex: 1;
         }
         .adv-data-table {
             width: 100%;
-            border-collapse: collapse;
-            font-size: 0.85rem;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 0.86rem;
             white-space: nowrap;
         }
         .adv-data-table th {
             position: sticky;
             top: 0;
-            background: var(--card-bg);
-            padding: 0.75rem 0.85rem;
-            border-bottom: 1px solid var(--card-border);
-            color: var(--text-muted);
+            background: #1e293b;
+            padding: 0.85rem 1rem;
+            border-bottom: 2px solid var(--card-border);
+            color: #94a3b8;
             font-weight: 600;
             text-align: left;
-            z-index: 10;
+            z-index: 25;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+        }
+        [data-theme="light"] .adv-data-table th {
+            background: #f1f5f9;
+            color: #475569;
+            border-bottom-color: #cbd5e1;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         }
         .adv-data-table td {
-            padding: 0.65rem 0.85rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
             color: var(--text-main);
+            vertical-align: middle;
         }
         [data-theme="light"] .adv-data-table td {
-            border-bottom-color: #f1f5f9;
+            border-bottom-color: #e2e8f0;
+        }
+        .adv-data-table tbody tr {
+            transition: background-color 0.15s ease;
+        }
+        .adv-data-table tbody tr:nth-child(even) {
+            background: rgba(255, 255, 255, 0.02);
+        }
+        [data-theme="light"] .adv-data-table tbody tr:nth-child(even) {
+            background: #f8fafc;
         }
         .adv-data-table tbody tr:hover {
-            background: rgba(56, 189, 248, 0.08);
+            background: rgba(56, 189, 248, 0.08) !important;
         }
-        .badge-lamp-type {
+        [data-theme="light"] .adv-data-table tbody tr:hover {
+            background: rgba(56, 189, 248, 0.12) !important;
+        }
+        .row-index-pill {
+            display: inline-block;
+            min-width: 26px;
+            text-align: center;
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+        .pole-id-badge {
             display: inline-block;
             padding: 0.2rem 0.55rem;
+            background: rgba(56, 189, 248, 0.12);
+            border: 1px solid rgba(56, 189, 248, 0.3);
             border-radius: 6px;
-            font-size: 0.75rem;
+            font-family: monospace;
             font-weight: 600;
+            color: var(--primary);
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+        }
+        .table-datetime-cell {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.25;
+        }
+        .date-text {
+            font-weight: 500;
+            color: var(--text-main);
+            font-size: 0.84rem;
+        }
+        .time-subtext {
+            font-size: 0.74rem;
+            color: var(--text-muted);
+        }
+        .badge-lamp-type {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.22rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .badge-lamp-led { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.35); }
+        .badge-lamp-fluo { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.35); }
+        .badge-lamp-sodium { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.35); }
+        .badge-lamp-highmast { background: rgba(167, 139, 250, 0.15); color: #a78bfa; border: 1px solid rgba(167, 139, 250, 0.35); }
+        .badge-lamp-other { background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.35); }
+        .surveyor-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+        }
+        .table-rem-cell {
+            color: var(--text-muted);
+            max-width: 180px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 0.82rem;
         }
         .btn-table-gps {
             display: inline-flex;
@@ -812,6 +1005,7 @@
             text-decoration: none;
             font-size: 0.75rem;
             font-weight: 500;
+            transition: all 0.2s;
         }
         .btn-table-gps:hover {
             background: var(--primary);
@@ -829,6 +1023,7 @@
             cursor: pointer;
             font-size: 0.75rem;
             font-family: inherit;
+            transition: all 0.2s;
         }
         .btn-table-photo:hover {
             background: var(--success);
@@ -2164,6 +2359,7 @@
                         
                         const modal = document.getElementById('dataTableModal');
                         if (modal && modal.style.display !== 'none') {
+                            updateModalFilterSummary();
                             renderDetailedTable(currentPage);
                         }
                     } else {
@@ -2351,6 +2547,7 @@
             // If modal is open, re-render table
             const modal = document.getElementById('dataTableModal');
             if (modal && modal.style.display !== 'none') {
+                updateModalFilterSummary();
                 currentPage = 1;
                 renderDetailedTable(currentPage);
             }
@@ -2601,13 +2798,99 @@
         }
 
         // ==========================================================================
-        // DETAILED DATA TABLE MODAL & PAGINATION
+        // DETAILED DATA TABLE MODAL, IN-MODAL SEARCH & PAGINATION
         // ==========================================================================
+        let modalQuickSearchTerm = '';
+
+        function getActiveModalRecords() {
+            if (!modalQuickSearchTerm) {
+                return currentFilteredRecords || [];
+            }
+            const q = modalQuickSearchTerm.toLowerCase();
+            return (currentFilteredRecords || []).filter(r => {
+                return (r.id && r.id.toLowerCase().includes(q)) ||
+                       (r.soi && r.soi.toLowerCase().includes(q)) ||
+                       (r.c && r.c.toLowerCase().includes(q)) ||
+                       (r.s && r.s.toLowerCase().includes(q)) ||
+                       (r.lamp && r.lamp.toLowerCase().includes(q)) ||
+                       (r.gps && r.gps.toLowerCase().includes(q)) ||
+                       (r.rem && r.rem.toLowerCase().includes(q));
+            });
+        }
+
+        function handleModalQuickSearch(val) {
+            modalQuickSearchTerm = (val || '').trim();
+            const btnClear = document.getElementById('btnClearModalSearch');
+            if (btnClear) {
+                btnClear.style.display = modalQuickSearchTerm ? 'block' : 'none';
+            }
+            currentPage = 1;
+            renderDetailedTable(currentPage);
+        }
+
+        function clearModalQuickSearch() {
+            const input = document.getElementById('modalSearchInput');
+            if (input) input.value = '';
+            handleModalQuickSearch('');
+        }
+
+        function updateModalFilterSummary() {
+            const summaryEl = document.getElementById('modalFilterBreadcrumb');
+            const statsEl = document.getElementById('modalQuickStats');
+            if (!summaryEl) return;
+
+            const commVal = document.getElementById('advCommunitySelect') ? document.getElementById('advCommunitySelect').value : 'all';
+            const lampVal = document.getElementById('advLampTypeSelect') ? document.getElementById('advLampTypeSelect').value : 'all';
+            const survVal = document.getElementById('advSurveyorSelect') ? document.getElementById('advSurveyorSelect').value : 'all';
+            const soiVal = document.getElementById('advSoiSelect') ? document.getElementById('advSoiSelect').value : 'all';
+            const keywordVal = document.getElementById('advSearchInput') ? document.getElementById('advSearchInput').value.trim() : '';
+
+            const chips = [];
+            if (commVal !== 'all') chips.push(`ชุมชน: <strong>${escapeHtml(commVal)}</strong>`);
+            if (soiVal !== 'all') chips.push(`ซอย/ถนน: <strong>${escapeHtml(soiVal)}</strong>`);
+            if (lampVal !== 'all') chips.push(`ชนิดโคม: <strong>${escapeHtml(lampVal)}</strong>`);
+            if (survVal !== 'all') chips.push(`ผู้สำรวจ: <strong>${escapeHtml(survVal.split('@')[0])}</strong>`);
+            if (keywordVal) chips.push(`คำค้นหา: <strong>"${escapeHtml(keywordVal)}"</strong>`);
+
+            if (chips.length === 0) {
+                summaryEl.innerHTML = `เงื่อนไข: <strong>ข้อมูลทั้งหมดในระบบ</strong>`;
+            } else {
+                summaryEl.innerHTML = `เงื่อนไข: ${chips.join(' &nbsp;•&nbsp; ')}`;
+            }
+
+            // Quick summary statistics in modal header
+            if (statsEl && currentFilteredRecords) {
+                let led = 0, fluo = 0, sodium = 0, other = 0;
+                currentFilteredRecords.forEach(r => {
+                    const l = r.lamp || '';
+                    if (l.includes('LED')) led++;
+                    else if (l.includes('ฟลูออเรสเซนต์')) fluo++;
+                    else if (l.includes('โซเดียม') || l.includes('แสงจันทร์')) sodium++;
+                    else other++;
+                });
+                statsEl.innerHTML = `
+                    <span class="pill-stat-mini led">💡 LED: ${led.toLocaleString()}</span>
+                    <span class="pill-stat-mini fluo">⚡ ฟลูฯ: ${fluo.toLocaleString()}</span>
+                    <span class="pill-stat-mini sodium">🟡 โซเดียม: ${sodium.toLocaleString()}</span>
+                    ${other > 0 ? `<span class="pill-stat-mini other">🔦 อื่นๆ: ${other.toLocaleString()}</span>` : ''}
+                `;
+            }
+        }
+
         function openDetailedTableModal() {
             const modal = document.getElementById('dataTableModal');
             if (!modal) return;
             modal.style.display = 'flex';
             document.body.style.overflow = 'hidden';
+
+            modalQuickSearchTerm = '';
+            const searchInput = document.getElementById('modalSearchInput');
+            if (searchInput) searchInput.value = '';
+            const btnClear = document.getElementById('btnClearModalSearch');
+            if (btnClear) btnClear.style.display = 'none';
+
+            updateModalFilterSummary();
+
             currentPage = 1;
             renderDetailedTable(currentPage);
         }
@@ -2625,7 +2908,8 @@
         }
 
         function goToPage(p) {
-            const total = currentFilteredRecords.length;
+            const activeRecords = getActiveModalRecords();
+            const total = activeRecords.length;
             const totalPages = Math.ceil(total / pageSize) || 1;
             if (p < 1) p = 1;
             if (p > totalPages) p = totalPages;
@@ -2635,61 +2919,72 @@
 
         function renderDetailedTable(page) {
             const tbody = document.getElementById('dataTableBody');
-            const total = currentFilteredRecords.length;
+            const activeRecords = getActiveModalRecords();
+            const total = activeRecords.length;
+            const totalBase = (currentFilteredRecords || []).length;
             const totalPages = Math.ceil(total / pageSize) || 1;
             if (page > totalPages) page = totalPages;
 
-            document.getElementById('modalResultCountBadge').innerText = `${total.toLocaleString()} จุด`;
+            const badge = document.getElementById('modalResultCountBadge');
+            if (badge) {
+                if (modalQuickSearchTerm) {
+                    badge.innerText = `${total.toLocaleString()} / ${totalBase.toLocaleString()} จุด`;
+                } else {
+                    badge.innerText = `${total.toLocaleString()} จุด`;
+                }
+            }
 
             const startIdx = (page - 1) * pageSize;
             const endIdx = Math.min(startIdx + pageSize, total);
-            const pageRecords = currentFilteredRecords.slice(startIdx, endIdx);
+            const pageRecords = activeRecords.slice(startIdx, endIdx);
 
             // Update Pagination Controls
-            document.getElementById('paginationInfoText').innerText = 
-                total > 0 ? `แสดงลำดับที่ ${startIdx + 1} - ${endIdx} จากทั้งหมด ${total.toLocaleString()} รายการ` : `ไม่พบรายการข้อมูล`;
+            const infoText = document.getElementById('paginationInfoText');
+            if (infoText) {
+                infoText.innerText = total > 0 
+                    ? `แสดงลำดับที่ ${startIdx + 1} - ${endIdx} จากทั้งหมด ${total.toLocaleString()} รายการ` 
+                    : `ไม่พบรายการข้อมูล`;
+            }
             document.getElementById('currentPageIndicator').innerText = `${page} / ${totalPages}`;
             document.getElementById('btnPrevPage').disabled = page <= 1;
             document.getElementById('btnNextPage').disabled = page >= totalPages;
 
             if (pageRecords.length === 0) {
                 if (!globalAllRecords || globalAllRecords.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="10" style="text-align: center; padding: 2.5rem; color: var(--text-muted);"><div class="spinner" style="margin: 0 auto 1rem; width: 32px; height: 32px;"></div>กำลังเชื่อมต่อฐานข้อมูลรายละเอียด 6,439 จุด...</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="10" style="text-align: center; padding: 2.5rem; color: var(--text-muted);"><div class="spinner" style="margin: 0 auto 1rem; width: 32px; height: 32px;"></div>กำลังเชื่อมต่อฐานข้อมูลรายละเอียด...</td></tr>`;
                     return;
                 }
-                tbody.innerHTML = `<tr><td colspan="10" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">❌ ไม่พบข้อมูลที่ตรงตามเงื่อนไขการค้นหา</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="10" style="text-align: center; padding: 2.5rem; color: var(--text-muted);"><div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🔍</div>ไม่พบข้อมูลที่ตรงตามเงื่อนไขการค้นหา</td></tr>`;
                 return;
             }
 
             const rowsHtml = pageRecords.map((r, idx) => {
                 const rowNo = startIdx + idx + 1;
                 
-                // Lamp badge styling
-                let badgeBg = 'rgba(148, 163, 184, 0.15)';
-                let badgeColor = '#94a3b8';
+                // Lamp badge styling & icon
+                let lampClass = 'badge-lamp-other';
+                let lampIcon = '🔦';
                 if (r.lamp.includes('LED')) {
-                    badgeBg = 'rgba(16, 185, 129, 0.15)';
-                    badgeColor = 'var(--success)';
+                    lampClass = 'badge-lamp-led';
+                    lampIcon = '💡';
                 } else if (r.lamp.includes('ฟลูออเรสเซนต์')) {
-                    badgeBg = 'rgba(56, 189, 248, 0.15)';
-                    badgeColor = 'var(--primary)';
+                    lampClass = 'badge-lamp-fluo';
+                    lampIcon = '⚡';
                 } else if (r.lamp.includes('โซเดียม') || r.lamp.includes('แสงจันทร์')) {
-                    badgeBg = 'rgba(245, 158, 11, 0.15)';
-                    badgeColor = 'var(--warning)';
+                    lampClass = 'badge-lamp-sodium';
+                    lampIcon = '🟡';
                 } else if (r.lamp.includes('ไฮแมส')) {
-                    badgeBg = 'rgba(167, 139, 250, 0.15)';
-                    badgeColor = '#a78bfa';
+                    lampClass = 'badge-lamp-highmast';
+                    lampIcon = '🌟';
                 }
 
                 // GPS button
                 let gpsHtml = '<span style="color:var(--text-muted);">-</span>';
                 if (r.gps && r.gps.trim() !== '') {
                     const cleanGps = r.gps.replace(/"/g, '').trim();
-                    // หลีกเลี่ยงการเขียน // ติดกันใน script ที่ Apps Script ส่งผ่าน HtmlService
-                    // เพราะบาง deployment อาจตัดข้อความหลัง // จน JavaScript syntax error ได้
                     const mapsUrl = 'https:' + String.fromCharCode(47, 47)
                         + 'www.google.com/maps?q=' + encodeURIComponent(cleanGps);
-                    gpsHtml = `<a href="${mapsUrl}" target="_blank" class="btn-table-gps" title="เปิดแผนที่ Google Maps">📍 แผนที่</a>`;
+                    gpsHtml = `<a href="${mapsUrl}" target="_blank" class="btn-table-gps" title="พิกัด: ${cleanGps}">📍 แผนที่</a>`;
                 }
 
                 // Photo button
@@ -2697,25 +2992,31 @@
                 if (r.pic && r.pic.trim() !== '') {
                     let fullPicUrl = r.pic;
                     if (!r.pic.startsWith('http')) {
-                        // สร้าง URL โดยไม่ใช้ // ตรง ๆ เพื่อป้องกัน HtmlService ตัดโค้ดหลัง //
                         fullPicUrl = 'https:' + String.fromCharCode(47, 47)
                             + 'lh3.googleusercontent.com/d/' + encodeURIComponent(r.pic);
                     }
                     picHtml = `<button type="button" class="btn-table-photo" onclick="openImageLightbox('${escapeJs(fullPicUrl)}', 'โคมไฟ: ${escapeJs(r.id)} (${escapeJs(r.soi)})')">📷 ดูภาพ</button>`;
                 }
 
+                const surveyorClean = (r.s || '-').split('@')[0];
+
                 return `
                     <tr>
-                        <td style="text-align: center; color: var(--text-muted); font-weight: 500;">${rowNo}</td>
-                        <td style="font-weight: 600; color: var(--primary); font-family: monospace;">${escapeHtml(r.id || '-')}</td>
-                        <td style="color: var(--text-muted);">${escapeHtml(r.d || '')} ${escapeHtml(r.t || '')}</td>
-                        <td style="font-weight: 500;">${escapeHtml(r.c || '-')}</td>
-                        <td>${escapeHtml(r.soi || '-')}</td>
-                        <td><span class="badge-lamp-type" style="background:${badgeBg}; color:${badgeColor};">${escapeHtml(r.lamp || '-')}</span></td>
-                        <td style="color: var(--text-muted);">${escapeHtml(r.s || '-')}</td>
+                        <td style="text-align: center;"><span class="row-index-pill">${rowNo}</span></td>
+                        <td style="text-align: center;"><span class="pole-id-badge">${escapeHtml(r.id || '-')}</span></td>
+                        <td>
+                            <div class="table-datetime-cell">
+                                <span class="date-text">${escapeHtml(r.d || '-')}</span>
+                                <span class="time-subtext">${escapeHtml(r.t || '')}</span>
+                            </div>
+                        </td>
+                        <td style="font-weight: 600; color: var(--text-main);">${escapeHtml(r.c || '-')}</td>
+                        <td style="font-weight: 500;">${escapeHtml(r.soi || '-')}</td>
+                        <td style="text-align: center;"><span class="badge-lamp-type ${lampClass}">${lampIcon} ${escapeHtml(r.lamp || '-')}</span></td>
+                        <td><span class="surveyor-badge" title="${escapeHtml(r.s || '')}">👷 ${escapeHtml(surveyorClean)}</span></td>
                         <td style="text-align: center;">${gpsHtml}</td>
                         <td style="text-align: center;">${picHtml}</td>
-                        <td style="color: var(--text-muted); max-width: 180px; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(r.rem || '')}">${escapeHtml(r.rem || '-')}</td>
+                        <td class="table-rem-cell" title="${escapeHtml(r.rem || '')}">${escapeHtml(r.rem || '-')}</td>
                     </tr>
                 `;
             }).join('');
@@ -2725,13 +3026,14 @@
 
         // Export Filtered Records to CSV (Excel format with UTF-8 BOM)
         function exportFilteredToCSV() {
-            if (!currentFilteredRecords || currentFilteredRecords.length === 0) {
+            const records = getActiveModalRecords();
+            if (!records || records.length === 0) {
                 alert("ไม่มีข้อมูลสำหรับส่งออก");
                 return;
             }
 
             const headers = ["ลำดับ", "รหัสโคมไฟ", "วันที่", "เวลา", "ชุมชน", "ซอย_ถนน", "ชนิดโคมไฟ", "ผู้สำรวจ", "พิกัด_GPS", "หมายเหตุ"];
-            const rows = currentFilteredRecords.map((r, i) => [
+            const rows = records.map((r, i) => [
                 i + 1,
                 r.id || '',
                 r.d || '',
@@ -2761,6 +3063,421 @@
             link.click();
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
+        }
+
+        // Export Filtered Records to Official Printable PDF Document
+        function exportFilteredToPDF() {
+            const records = getActiveModalRecords();
+            if (!records || records.length === 0) {
+                alert("ไม่มีข้อมูลสำหรับส่งออกเป็น PDF");
+                return;
+            }
+
+            // 1. Gather active filter descriptions
+            const commVal = document.getElementById('advCommunitySelect') ? document.getElementById('advCommunitySelect').value : 'all';
+            const lampVal = document.getElementById('advLampTypeSelect') ? document.getElementById('advLampTypeSelect').value : 'all';
+            const survVal = document.getElementById('advSurveyorSelect') ? document.getElementById('advSurveyorSelect').value : 'all';
+            const soiVal = document.getElementById('advSoiSelect') ? document.getElementById('advSoiSelect').value : 'all';
+            const keywordVal = document.getElementById('advSearchInput') ? document.getElementById('advSearchInput').value.trim() : '';
+
+            const filterItems = [];
+            if (commVal !== 'all') filterItems.push(`ชุมชน: <strong>${escapeHtml(commVal)}</strong>`);
+            if (soiVal !== 'all') filterItems.push(`ซอย/ถนน: <strong>${escapeHtml(soiVal)}</strong>`);
+            if (lampVal !== 'all') filterItems.push(`ชนิดโคม: <strong>${escapeHtml(lampVal)}</strong>`);
+            if (survVal !== 'all') filterItems.push(`ผู้สำรวจ: <strong>${escapeHtml(survVal.split('@')[0])}</strong>`);
+            if (keywordVal) filterItems.push(`คำค้นหา: <strong>"${escapeHtml(keywordVal)}"</strong>`);
+            if (modalQuickSearchTerm) filterItems.push(`ค้นหาในตาราง: <strong>"${escapeHtml(modalQuickSearchTerm)}"</strong>`);
+
+            const filterDescHtml = filterItems.length > 0 
+                ? filterItems.join(' &nbsp;|&nbsp; ') 
+                : 'ข้อมูลทั้งหมดในระบบ (ไม่จำกัดเงื่อนไข)';
+
+            // 2. Compute Lamp type statistics
+            let countLED = 0, countFluo = 0, countSodium = 0, countHighmast = 0, countOther = 0;
+            records.forEach(r => {
+                const l = r.lamp || '';
+                if (l.includes('LED')) countLED++;
+                else if (l.includes('ฟลูออเรสเซนต์')) countFluo++;
+                else if (l.includes('โซเดียม') || l.includes('แสงจันทร์')) countSodium++;
+                else if (l.includes('ไฮแมส')) countHighmast++;
+                else countOther++;
+            });
+
+            // 3. Thai Date/Time
+            const now = new Date();
+            const thaiMonths = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+            const thaiDate = `${now.getDate()} ${thaiMonths[now.getMonth()]} พ.ศ. ${now.getFullYear() + 543}`;
+            const thaiTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} น.`;
+            const dateFileStr = `${now.getFullYear() + 543}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+
+            // 4. Generate Table Rows
+            const rowsHtml = records.map((r, idx) => {
+                const cleanGps = (r.gps || '').replace(/"/g, '').trim();
+                let gpsDisplay = '-';
+                if (cleanGps) {
+                    const mapsUrl = 'https:' + String.fromCharCode(47, 47)
+                        + 'www.google.com/maps?q=' + encodeURIComponent(cleanGps);
+                    gpsDisplay = `<a href="${mapsUrl}" target="_blank" class="gps-link">${cleanGps}</a>`;
+                }
+
+                const surveyor = (r.s || '-').split('@')[0];
+
+                let lampClass = 'lamp-other';
+                if (r.lamp.includes('LED')) lampClass = 'lamp-led';
+                else if (r.lamp.includes('ฟลูออเรสเซนต์')) lampClass = 'lamp-fluo';
+                else if (r.lamp.includes('โซเดียม') || r.lamp.includes('แสงจันทร์')) lampClass = 'lamp-sodium';
+                else if (r.lamp.includes('ไฮแมส')) lampClass = 'lamp-highmast';
+
+                return `
+                    <tr>
+                        <td class="text-center font-num">${idx + 1}</td>
+                        <td class="text-center font-mono">${escapeHtml(r.id || '-')}</td>
+                        <td class="text-center" style="white-space: nowrap;">${escapeHtml(r.d || '-')} ${escapeHtml(r.t || '')}</td>
+                        <td>${escapeHtml(r.c || '-')}</td>
+                        <td>${escapeHtml(r.soi || '-')}</td>
+                        <td class="text-center"><span class="lamp-pill ${lampClass}">${escapeHtml(r.lamp || '-')}</span></td>
+                        <td class="text-center" style="white-space: nowrap;">${gpsDisplay}</td>
+                        <td>${escapeHtml(surveyor)}</td>
+                        <td>${escapeHtml(r.rem || '-')}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            // 5. Build full HTML
+            const reportHtml = `<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>รายงานผลการสำรวจโคมไฟสาธารณะ_เทศบาลนครระยอง_${dateFileStr}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 10mm 8mm 12mm 8mm;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Prompt', 'Sarabun', 'Tahoma', sans-serif;
+        }
+        body {
+            background: #ffffff;
+            color: #0f172a;
+            font-size: 11px;
+            line-height: 1.4;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        .no-print-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 24px;
+            background: #0f172a;
+            color: #ffffff;
+            position: sticky;
+            top: 0;
+            z-index: 9999;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            font-size: 13px;
+        }
+        .btn-print {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(37,99,235,0.4);
+            font-family: inherit;
+        }
+        .btn-print:hover { background: #1d4ed8; }
+        .btn-close {
+            background: #475569;
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-family: inherit;
+        }
+        .btn-close:hover { background: #334155; }
+        @media print {
+            .no-print-bar {
+                display: none !important;
+            }
+            body {
+                padding: 0 !important;
+                background: white !important;
+            }
+        }
+        .report-page {
+            padding: 14px 18px;
+            max-width: 100%;
+            margin: 0 auto;
+        }
+        .report-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #0f172a;
+        }
+        .header-logo {
+            position: absolute;
+            left: 0;
+            top: 2px;
+            width: 65px;
+            height: 65px;
+            object-fit: contain;
+        }
+        .header-titles {
+            text-align: center;
+        }
+        .header-titles h1 {
+            font-size: 17px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 2px;
+        }
+        .header-titles h2 {
+            font-size: 13px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 2px;
+        }
+        .header-titles p {
+            font-size: 11px;
+            color: #475569;
+            font-weight: 500;
+        }
+        .meta-summary-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 8px 14px;
+            margin-bottom: 12px;
+            font-size: 11px;
+            gap: 15px;
+        }
+        .meta-col {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .meta-stats {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-top: 3px;
+        }
+        .stat-badge {
+            display: inline-block;
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            border: 1px solid #cbd5e1;
+            background: white;
+        }
+        .stat-badge.led { color: #059669; border-color: #a7f3d0; background: #ecfdf5; }
+        .stat-badge.fluo { color: #0284c7; border-color: #bae6fd; background: #f0f9ff; }
+        .stat-badge.sodium { color: #d97706; border-color: #fde68a; background: #fffbeb; }
+        .stat-badge.highmast { color: #7c3aed; border-color: #ddd6fe; background: #f5f3ff; }
+        .stat-badge.other { color: #64748b; border-color: #e2e8f0; background: #f8fafc; }
+
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10.5px;
+            margin-bottom: 16px;
+        }
+        .report-table thead {
+            display: table-header-group;
+        }
+        .report-table tfoot {
+            display: table-footer-group;
+        }
+        .report-table tr {
+            page-break-inside: avoid;
+        }
+        .report-table th {
+            background: #e2e8f0;
+            color: #0f172a;
+            font-weight: 600;
+            padding: 6px 7px;
+            border: 1px solid #94a3b8;
+            text-align: left;
+        }
+        .report-table td {
+            padding: 5px 7px;
+            border: 1px solid #cbd5e1;
+            vertical-align: middle;
+            color: #1e293b;
+        }
+        .report-table tbody tr:nth-child(even) {
+            background: #f8fafc;
+        }
+        .text-center { text-align: center; }
+        .font-num { font-weight: 600; color: #64748b; }
+        .font-mono { font-family: monospace; font-size: 10px; color: #0369a1; font-weight: 600; }
+        .lamp-pill {
+            display: inline-block;
+            padding: 1px 6px;
+            border-radius: 3px;
+            font-size: 9.5px;
+            font-weight: 600;
+        }
+        .lamp-led { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+        .lamp-fluo { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+        .lamp-sodium { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+        .lamp-highmast { background: #ede9fe; color: #5b21b6; border: 1px solid #ddd6fe; }
+        .lamp-other { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+        .gps-link {
+            color: #0284c7;
+            text-decoration: none;
+            font-family: monospace;
+            font-size: 9.5px;
+        }
+        .signature-block {
+            page-break-inside: avoid;
+            display: flex;
+            justify-content: space-around;
+            margin-top: 25px;
+            padding-top: 15px;
+            border-top: 1px dashed #cbd5e1;
+        }
+        .sig-item {
+            text-align: center;
+            font-size: 11px;
+            line-height: 1.8;
+            width: 30%;
+        }
+        .report-footer-note {
+            margin-top: 15px;
+            text-align: right;
+            font-size: 9.5px;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="no-print-bar">
+        <div>
+            <strong>📄 รายงานผลการสำรวจโคมไฟสาธารณะ เทศบาลนครระยอง</strong>
+            <span style="opacity: 0.8; margin-left: 10px;">(กดปุ่ม 'สั่งพิมพ์ / บันทึก PDF' ด้านขวา เพื่อบันทึกเป็น PDF หรือส่งออกเครื่องพิมพ์)</span>
+        </div>
+        <div style="display: flex; gap: 8px;">
+            <button type="button" class="btn-print" onclick="window.print()">🖨️ สั่งพิมพ์ / บันทึก PDF</button>
+            <button type="button" class="btn-close" onclick="window.close()">✕ ปิดหน้านี้</button>
+        </div>
+    </div>
+
+    <div class="report-page">
+        <div class="report-header">
+            <img src="logo.png" onerror="this.src='https://lh3.googleusercontent.com/d/10sQCt0_O4dIjq_2sZvPEhPXwDGbv9idm'" class="header-logo" alt="ตราเทศบาลนครระยอง">
+            <div class="header-titles">
+                <h1>เทศบาลนครระยอง</h1>
+                <h2>รายงานข้อมูลการสำรวจตำแหน่งโคมไฟสาธารณะ</h2>
+                <p>ฝ่ายสาธารณูปโภค ส่วนการโยธา สำนักช่าง เทศบาลนครระยอง</p>
+            </div>
+        </div>
+
+        <div class="meta-summary-card">
+            <div class="meta-col">
+                <div><strong>เงื่อนไขการกรอง:</strong> ${filterDescHtml}</div>
+                <div><strong>วันที่พิมพ์รายงาน:</strong> ${thaiDate} เวลา ${thaiTime}</div>
+            </div>
+            <div class="meta-col" style="text-align: right;">
+                <div><strong>จำนวนโคมไฟในรายงาน:</strong> <span style="font-size: 13px; font-weight: 700; color: #0284c7;">${records.length.toLocaleString()}</span> จุด</div>
+                <div class="meta-stats">
+                    <span class="stat-badge led">💡 LED: ${countLED.toLocaleString()}</span>
+                    <span class="stat-badge fluo">⚡ ฟลูออเรสเซนต์: ${countFluo.toLocaleString()}</span>
+                    <span class="stat-badge sodium">🟡 โซเดียม/แสงจันทร์: ${countSodium.toLocaleString()}</span>
+                    ${countHighmast > 0 ? `<span class="stat-badge highmast">🌟 ไฮแมส: ${countHighmast.toLocaleString()}</span>` : ''}
+                    ${countOther > 0 ? `<span class="stat-badge other">🔦 อื่นๆ: ${countOther.toLocaleString()}</span>` : ''}
+                </div>
+            </div>
+        </div>
+
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th style="width: 40px; text-align: center;">ลำดับ</th>
+                    <th style="width: 85px; text-align: center;">รหัสโคม</th>
+                    <th style="width: 110px; text-align: center;">วัน/เวลาสำรวจ</th>
+                    <th style="width: 130px;">ชุมชน</th>
+                    <th>ซอย / ถนน</th>
+                    <th style="width: 105px; text-align: center;">ชนิดโคมไฟ</th>
+                    <th style="width: 125px; text-align: center;">พิกัด GPS</th>
+                    <th style="width: 100px;">ผู้สำรวจ</th>
+                    <th style="width: 110px;">หมายเหตุ</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${rowsHtml}
+            </tbody>
+        </table>
+
+        <div class="signature-block">
+            <div class="sig-item">
+                <p>ลงชื่อ .............................................................. ผู้จัดทำรายงาน</p>
+                <p>( .............................................................. )</p>
+                <p>เจ้าหน้าที่ผู้สำรวจ / บันทึกข้อมูล</p>
+                <p>วันที่ .......... / .......... / ..........</p>
+            </div>
+            <div class="sig-item">
+                <p>ลงชื่อ .............................................................. ผู้ตรวจสอบ</p>
+                <p>( .............................................................. )</p>
+                <p>หัวหน้าฝ่ายสาธารณูปโภค</p>
+                <p>วันที่ .......... / .......... / ..........</p>
+            </div>
+            <div class="sig-item">
+                <p>ลงชื่อ .............................................................. ผู้รับรอง</p>
+                <p>( .............................................................. )</p>
+                <p>ผู้อำนวยการสำนักช่าง</p>
+                <p>วันที่ .......... / .......... / ..........</p>
+            </div>
+        </div>
+
+        <div class="report-footer-note">
+            ระบบสารสนเทศภูมิศาสตร์และสำรวจโคมไฟถนน เทศบาลนครระยอง | พิมพ์เมื่อ ${thaiDate} ${thaiTime}
+        </div>
+    </div>
+
+    <scr` + `ipt>
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                window.print();
+            }, 500);
+        });
+    </scr` + `ipt>
+</body>
+</html>`;
+
+            const printWindow = window.open('', '_blank');
+            if (!printWindow) {
+                alert("กรุณาอนุญาตให้เบราว์เซอร์เปิดหน้าต่าง Pop-up เพื่อพิมพ์รายงาน PDF");
+                return;
+            }
+            printWindow.document.open();
+            printWindow.document.write(reportHtml);
+            printWindow.document.close();
         }
 
         // Lightbox Functions
@@ -2839,10 +3556,28 @@
                     <span id="modalResultCountBadge" class="modal-count-pill">0 จุด</span>
                 </div>
                 <div class="adv-modal-actions">
+                    <button type="button" class="btn-export-pdf" onclick="exportFilteredToPDF()" title="พิมพ์หรือส่งออกเป็นรายงาน PDF ทางราชการ">
+                        📄 ส่งออก PDF / พิมพ์
+                    </button>
                     <button type="button" class="btn-export-csv" onclick="exportFilteredToCSV()" title="ดาวน์โหลดเป็นไฟล์ CSV (Excel)">
                         📥 ส่งออก CSV / Excel
                     </button>
                     <button type="button" class="btn-modal-close" onclick="closeDetailedTableModal()" title="ปิดหน้าต่าง">✕</button>
+                </div>
+            </div>
+
+            <!-- In-Modal Toolbar: Active Filter Breadcrumb & Quick Search -->
+            <div class="adv-modal-toolbar">
+                <div class="modal-filter-info">
+                    <span>🎯</span>
+                    <span id="modalFilterBreadcrumb">เงื่อนไข: แสดงข้อมูลทั้งหมด</span>
+                </div>
+                <div id="modalQuickStats" class="modal-stats-chips">
+                    <!-- Dynamic stats chips via JS -->
+                </div>
+                <div class="modal-search-box">
+                    <input type="text" id="modalSearchInput" class="modal-search-input" placeholder="🔍 ค้นหาด่วนในตารางนี้..." oninput="handleModalQuickSearch(this.value)">
+                    <button type="button" id="btnClearModalSearch" class="btn-clear-modal-search" onclick="clearModalQuickSearch()" style="display: none;" title="ล้างคำค้น">✕</button>
                 </div>
             </div>
 
@@ -2852,12 +3587,12 @@
                         <thead>
                             <tr>
                                 <th style="width: 55px; text-align: center;">ลำดับ</th>
-                                <th style="width: 100px;">รหัสโคม</th>
-                                <th style="width: 135px;">วันที่/เวลา</th>
-                                <th style="width: 150px;">ชุมชน</th>
+                                <th style="width: 105px; text-align: center;">รหัสโคม</th>
+                                <th style="width: 135px;">วัน/เวลาสำรวจ</th>
+                                <th style="width: 140px;">ชุมชน</th>
                                 <th>ซอย / ถนน</th>
-                                <th style="width: 130px;">ชนิดโคมไฟ</th>
-                                <th style="width: 120px;">ผู้สำรวจ</th>
+                                <th style="width: 140px; text-align: center;">ชนิดโคมไฟ</th>
+                                <th style="width: 135px;">ผู้สำรวจ</th>
                                 <th style="width: 90px; text-align: center;">พิกัด GPS</th>
                                 <th style="width: 85px; text-align: center;">รูปภาพ</th>
                                 <th>หมายเหตุ</th>
