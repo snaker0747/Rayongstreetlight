@@ -1461,18 +1461,10 @@
         });
 
         function loadData(forceRefresh = false) {
-            // ⚡ 1. ถ้ามีข้อมูลฝังมาจาก Server (Apps Script) ให้แสดงผลทันทีภายใน 0.01 วินาที!
-            if (window.INITIAL_DATA && window.INITIAL_DATA.status === 'success') {
-                console.log("⚡ [Layer 1] Loaded immediately from Server-Injected Data!");
-                renderDashboard(window.INITIAL_DATA);
-                return;
-            }
-
             const loader = document.getElementById('loader');
             const syncBadge = document.getElementById('syncStatusBadge');
 
-            // ⚡ 2. ระบบแคชอัจฉริยะ SWR (Stale-While-Revalidate):
-            // เปิดเว็บปุ๊บ แสดงผลทันทีใน 0.005 วินาทีจากแคชในเครื่อง ไม่ต้องรอวงล้อหมุน!
+            // ⚡ 1. ระบบแคช SWR (Stale-While-Revalidate): เปิดปุ๊บ แสดงผลทันที < 0.01s จาก localStorage
             let hasLoadedFromCache = false;
             if (!forceRefresh) {
                 try {
@@ -1480,7 +1472,6 @@
                     if (cachedStr) {
                         const cached = JSON.parse(cachedStr);
                         if (cached && cached.dashboardData && cached.dashboardData.status === 'success') {
-                            console.log("⚡ [SWR Cache] Instant render from local cache (< 0.01s)!");
                             globalAllRecords = cached.allRecords || [];
                             currentFilteredRecords = globalAllRecords;
                             renderDashboard(cached.dashboardData);
@@ -1488,11 +1479,6 @@
                             updateFilterStatsBadge(globalAllRecords.length, globalAllRecords.length);
                             if (loader) loader.style.display = 'none';
                             hasLoadedFromCache = true;
-                            if (syncBadge) {
-                                syncBadge.style.display = 'inline-block';
-                                syncBadge.innerText = '⚡ ซิงค์ข้อมูลล่าสุด...';
-                                syncBadge.style.color = 'var(--text-muted)';
-                            }
                         }
                     }
                 } catch(e) {
@@ -1500,18 +1486,40 @@
                 }
             }
 
-            // ถ้าไม่มีแคช (เปิดครั้งแรกในเครื่องนี้) หรือผู้ใช้กดปุ่มรีเฟรช ให้แสดงตัวโหลด
+            // ⚡ 2. ถ้ายังไม่มีแคชในเครื่อง (เปิดครั้งแรก หรือล้างแคช) ให้โหลดจาก data_cache.json บน Vercel CDN ทันที (< 0.1s)!
             if (!hasLoadedFromCache) {
-                if (loader) loader.style.display = 'flex';
-                if (syncBadge) {
-                    syncBadge.style.display = 'inline-block';
-                    syncBadge.innerText = '🔄 กำลังดึงข้อมูลสด...';
-                    syncBadge.style.color = 'var(--primary)';
-                }
+                fetch('data_cache.json')
+                    .then(res => res.json())
+                    .then(cached => {
+                        if (cached && cached.dashboardData && (!globalAllRecords || globalAllRecords.length === 0)) {
+                            globalAllRecords = cached.allRecords || [];
+                            currentFilteredRecords = globalAllRecords;
+                            renderDashboard(cached.dashboardData);
+                            populateSoiOptions(globalAllRecords);
+                            updateFilterStatsBadge(globalAllRecords.length, globalAllRecords.length);
+                            if (loader) loader.style.display = 'none';
+                            hasLoadedFromCache = true;
+                            try {
+                                localStorage.setItem('rayong_dashboard_cache_v1', JSON.stringify({
+                                    dashboardData: cached.dashboardData,
+                                    allRecords: cached.allRecords,
+                                    savedAt: Date.now()
+                                }));
+                            } catch(e) {}
+                        }
+                    })
+                    .catch(e => {
+                        console.warn("data_cache.json fetch error:", e);
+                    })
+                    .finally(() => {
+                        // ⚡ 3. ซิงค์ข้อมูลสดจาก Google Sheet ในพื้นหลังอย่างเงียบ ๆ (ไม่บล็อกหน้าจอ)
+                        fetchLiveGoogleSheetGViz(hasLoadedFromCache);
+                    });
+                return;
             }
 
-            // ⚡ 3. พุ่งตรงไปดึงข้อมูลสดจาก Google Sheet ทันที (ไม่รอ Apps Script ที่ตายแล้ว)
-            fetchLiveGoogleSheetGViz(hasLoadedFromCache);
+            // ⚡ 3. หากมีแคชแล้ว ซิงค์ข้อมูลสดจาก Google Sheet ในพื้นหลังเงียบ ๆ ทันที
+            fetchLiveGoogleSheetGViz(true);
         }
 
         // ⚡ ดึงข้อมูลสดจาก Google Sheet ตรงๆ ผ่าน GViz JSONP (ความเร็วสูง คัดกรองเฉพาะคอลัมน์ A-I)
@@ -3073,6 +3081,17 @@
                 return;
             }
 
+            if (records.length > 500) {
+                const proceed = confirm(
+                    `⚠️ รายการข้อมูลมีจำนวนมาก (${records.length.toLocaleString()} จุด)\n` +
+                    `การสร้างเอกสาร PDF ขนาดใหญ่ (~${Math.ceil(records.length / 28)} หน้า) อาจใช้เวลาเรนเดอร์หลายวินาที\n\n` +
+                    `💡 คำแนะนำ: กรองเลือกเฉพาะ 'ชุมชน' หรือ 'ซอย/ถนน' ก่อนสั่งพิมพ์\n` +
+                    `หรือใช้ปุ่ม '📥 ส่งออก CSV / Excel' เพื่อนำไปเปิดใน Excel ได้ทันทีโดยไม่ต้องรอ\n\n` +
+                    `คุณต้องการยืนยันสร้างเอกสาร PDF ทั้งหมดต่อไปหรือไม่?`
+                );
+                if (!proceed) return;
+            }
+
             // 1. Gather active filter descriptions
             const commVal = document.getElementById('advCommunitySelect') ? document.getElementById('advCommunitySelect').value : 'all';
             const lampVal = document.getElementById('advLampTypeSelect') ? document.getElementById('advLampTypeSelect').value : 'all';
@@ -3461,11 +3480,9 @@
     </div>
 
     <scr` + `ipt>
-        window.addEventListener('load', () => {
-            setTimeout(() => {
-                window.print();
-            }, 500);
-        });
+        setTimeout(function() {
+            try { window.focus(); window.print(); } catch(e) {}
+        }, 250);
     </scr` + `ipt>
 </body>
 </html>`;
@@ -3478,6 +3495,14 @@
             printWindow.document.open();
             printWindow.document.write(reportHtml);
             printWindow.document.close();
+
+            // Direct trigger from opener window as well
+            setTimeout(() => {
+                try {
+                    printWindow.focus();
+                    printWindow.print();
+                } catch(e) {}
+            }, 350);
         }
 
         // Lightbox Functions
